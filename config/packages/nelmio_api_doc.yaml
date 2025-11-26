@@ -1,0 +1,55 @@
+# config/packages/nelmio_api_doc.yaml
+nelmio_api_doc:
+    # API 文档配置
+    documentation:
+        info:
+            title: 官方网站后台 API
+            description: |
+                官方网站后台系统API文档
+
+                ## 认证说明
+                本API使用JWT Bearer Token进行认证。请在请求头中添加：
+                `Authorization: Bearer <your_jwt_token>`
+
+                ## 获取Token
+                请通过登录接口获取有效的JWT Token。
+            version: 2.0.0
+            contact:
+                name: API Support
+                email: support@example.com
+        servers:
+            - url: http://localhost:8000
+              description: 本地开发服务器
+            - url: https://api.yourdomain.com
+              description: 生产环境服务器
+        components:
+            securitySchemes:
+                bearerAuth:
+                    type: http
+                    scheme: bearer
+                    bearerFormat: JWT
+                    description: JWT Bearer Token认证
+        security:
+            - bearerAuth: []
+        tags:
+            - name: 认证相关
+              description: 用户登录、注册等认证接口
+            - name: 新闻文章管理
+              description: 新闻文章的增删改查操作
+            - name: 测试
+              description: 测试接口
+            - name: 公众号管理
+              description: 微信公众号相关接口
+
+    # 文档区域配置
+    areas:
+        path_patterns:
+            - ^/api
+            - ^/official-api
+            - ^/api_doc
+        host_patterns:
+            - ^.*$  # 允许所有主机
+
+    # 模型配置
+    models:
+        use_jms: false

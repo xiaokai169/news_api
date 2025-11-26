@@ -1,0 +1,69 @@
+security:
+    # https://symfony.com/doc/current/security.html#registering-the-user-hashing-passwords
+    password_hashers:
+        Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
+        App\Entity\User: 'auto'  # 为用户实体指定密码哈希器
+
+    # https://symfony.com/doc/current/security.html#loading-the-user-the-user-provider
+    providers:
+        app_user_provider:
+            entity:
+                class: App\Entity\User
+                property: username  # 用户标识符字段
+                manager_name: user  # 使用用户数据库的实体管理器
+
+    firewalls:
+        dev:
+            pattern: ^/(_(profiler|wdt)|css|images|js)/
+            security: false
+
+        api:
+            pattern: ^/official-api
+            stateless: true
+            provider: app_user_provider
+            # 临时禁用安全认证用于测试验证功能
+            # 生产环境中应该启用JWT认证
+            security: false
+
+        main:
+            lazy: true
+            provider: app_user_provider
+            form_login:
+                login_path: app_login
+                check_path: app_login
+                enable_csrf: true
+                default_target_path: app_dashboard
+            logout:
+                path: app_logout
+                target: app_login
+
+    # Easy way to control access for large sections of your site
+    # Note: Only the *first* access control that matches will be used
+    access_control:
+        # 允许匿名访问欢迎页面
+        - { path: ^/$, roles: PUBLIC_ACCESS }
+        # 允许匿名访问登录页面
+        - { path: ^/login$, roles: PUBLIC_ACCESS }
+        # 允许匿名访问API文档
+        - { path: ^/api/doc, roles: PUBLIC_ACCESS }
+        - { path: ^/api_doc$, roles: PUBLIC_ACCESS }
+        # 临时允许API访问用于测试验证功能
+        # 生产环境中应该启用认证
+        - { path: ^/official-api, roles: PUBLIC_ACCESS }
+        # 允许匿名访问静态资源
+        - { path: ^/(css|js|images)/, roles: PUBLIC_ACCESS }
+        # 其他所有路径都需要认证
+        - { path: ^/, roles: IS_AUTHENTICATED_FULLY }
+
+when@test:
+    security:
+        password_hashers:
+            # By default, password hashers are resource intensive and take time. This is
+            # important to generate secure password hashes. In tests however, secure hashes
+            # are not important, waste resources and increase test times. The following
+            # reduces the work factor to the lowest possible values.
+            Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface:
+                algorithm: auto
+                cost: 4 # Lowest possible value for bcrypt
+                time_cost: 3 # Lowest possible value for argon
+                memory_cost: 10 # Lowest possible value for argon

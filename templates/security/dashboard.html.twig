@@ -1,0 +1,78 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}用户仪表板 - 官方网站后台{% endblock %}
+
+{% block body %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>用户仪表板</h1>
+                <div>
+                    <span class="me-3">欢迎, {{ user.displayName }}</span>
+                    <a href="{{ path('app_logout') }}" class="btn btn-outline-secondary">注销</a>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">用户信息</h5>
+                            <ul class="list-unstyled">
+                                <li><strong>用户名:</strong> {{ user.username }}</li>
+                                <li><strong>邮箱:</strong> {{ user.email }}</li>
+                                <li><strong>昵称:</strong> {{ user.nickname ?? '未设置' }}</li>
+                                <li><strong>手机:</strong> {{ user.phone ?? '未设置' }}</li>
+                                <li><strong>状态:</strong>
+                                    <span class="badge {{ user.isActive() ? 'bg-success' : 'bg-danger' }}">
+                                        {{ user.isActive() ? '活跃' : '禁用' }}
+                                    </span>
+                                </li>
+                                <li><strong>注册时间:</strong> {{ user.createdAt|date('Y-m-d H:i:s') }}</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">角色权限</h5>
+                            <div class="mb-3">
+                                {% for role in user.roles %}
+                                    <span class="badge bg-primary me-1">{{ role }}</span>
+                                {% endfor %}
+                            </div>
+                            <p class="text-muted small">您的角色决定了您在系统中的访问权限。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">快速操作</h5>
+                            <div class="d-grid gap-2">
+                                <a href="#" class="btn btn-outline-primary">查看个人资料</a>
+                                <a href="#" class="btn btn-outline-secondary">修改密码</a>
+                                <a href="#" class="btn btn-outline-info">系统设置</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">系统信息</h5>
+                </div>
+                <div class="card-body">
+                    <p>您已成功登录到官方网站后台管理系统。</p>
+                    <p class="mb-0">当前时间: {{ "now"|date('Y-m-d H:i:s') }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

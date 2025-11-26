@@ -1,0 +1,13 @@
+# config/routes/nelmio_api_doc.yaml
+api_doc:
+    path: /api/doc
+    controller: nelmio_api_doc.controller.swagger_ui
+
+api_doc_json:
+    path: /api/doc.json
+    controller: nelmio_api_doc.controller.swagger_json
+
+# 添加别名路由以支持 /api_doc 访问
+api_doc_alias:
+    path: /api_doc
+    controller: nelmio_api_doc.controller.swagger_ui

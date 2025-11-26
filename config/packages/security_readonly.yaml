@@ -1,0 +1,33 @@
+# 用户数据库只读安全配置
+# 此配置确保用户数据库只能进行读取操作
+
+services:
+    # 用户只读服务配置
+    App\Service\UserReadOnlyService:
+        arguments:
+            $userRepository: '@App\Repository\UserRepository'
+        tags:
+            - { name: 'monolog.logger', channel: 'user_readonly' }
+
+    # 用户数据库连接监听器 - 阻止写操作
+    App\EventListener\UserDatabaseReadonlyListener:
+        tags:
+            - { name: 'doctrine.event_listener', event: 'prePersist', entity_manager: 'user' }
+            - { name: 'doctrine.event_listener', event: 'preUpdate', entity_manager: 'user' }
+            - { name: 'doctrine.event_listener', event: 'preRemove', entity_manager: 'user' }
+
+# 用户数据库实体管理器只读配置
+doctrine:
+    orm:
+        entity_managers:
+            user:
+                # 只读模式配置 - 使用正确的缓存池配置
+                query_cache_driver:
+                    type: pool
+                    pool: doctrine.system_cache_pool
+                result_cache_driver:
+                    type: pool
+                    pool: doctrine.result_cache_pool
+                # 禁用二级缓存中的写操作
+                second_level_cache:
+                    enabled: false

@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>官方网站后台 API 文档</title>
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@3/swagger-ui.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #fafafa;
+        }
+
+        .header {
+            background: #4a90e2;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .header p {
+            margin: 5px 0 0 0;
+            opacity: 0.9;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            min-height: 80vh;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 20px;
+        }
+
+        .api-list {
+            padding: 20px;
+        }
+
+        .api-item {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 10px 0;
+            padding: 15px;
+        }
+
+        .api-item h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+
+        .method {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 3px;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .get {
+            background: #61affe;
+        }
+
+        .post {
+            background: #49cc90;
+        }
+
+        .put {
+            background: #fca130;
+        }
+
+        .delete {
+            background: #f93e3e;
+        }
+
+        .patch {
+            background: #50e3c2;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>🚀 官方网站后台 API 文档</h1>
+        <p>RESTful API 接口文档和测试工具</p>
+    </div>
+
+    <div class="container">
+        <div class="info-box">
+            <h3>📖 使用说明</h3>
+            <p><strong>认证方式:</strong> JWT Bearer Token</p>
+            <p><strong>Base URL:</strong> <code id="baseUrl">http://localhost:8001</code></p>
+        </div>
+
+        <div id="swagger-ui"></div>
+
+        <div class="api-list">
+            <h2>📋 API 端点列表</h2>
+
+            <div class="api-item">
+                <h3><span class="method get">GET</span> /api/health</h3>
+                <p><strong>描述:</strong> 健康检查接口</p>
+                <p><strong>认证:</strong> 不需要</p>
+            </div>
+
+            <div class="api-item">
+                <h3><span class="method get">GET</span> /api/test</h3>
+                <p><strong>描述:</strong> 测试接口</p>
+                <p><strong>认证:</strong> 不需要</p>
+            </div>
+
+            <div class="api-item">
+                <h3><span class="method get">GET</span> /api/info</h3>
+                <p><strong>描述:</strong> API 系统信息</p>
+                <p><strong>认证:</strong> 不需要</p>
+            </div>
+
+            <div class="api-item">
+                <h3><span class="method get">GET</span> /official-api/news</h3>
+                <p><strong>描述:</strong> 获取新闻文章列表</p>
+                <p><strong>认证:</strong> 需要 JWT Token</p>
+                <p><strong>参数:</strong> page, limit, status, categoryCode 等</p>
+            </div>
+
+            <div class="api-item">
+                <h3><span class="method post">POST</span> /official-api/news</h3>
+                <p><strong>描述:</strong> 创建新闻文章</p>
+                <p><strong>认证:</strong> 需要 JWT Token</p>
+                <p><strong>请求体:</strong> name, cover, content, category 等</p>
+            </div>
+
+            <div class="api-item">
+                <h3><span class="method get">GET</span> /official-api/news/{id}</h3>
+                <p><strong>描述:</strong> 获取单个新闻文章</p>
+                <p><strong>认证:</strong> 需要 JWT Token</p>
+            </div>
+
+            <div class="api-item">
+                <h3><span class="method put">PUT</span> /official-api/news/{id}</h3>
+                <p><strong>描述:</strong> 更新新闻文章</p>
+                <p><strong>认证:</strong> 需要 JWT Token</p>
+            </div>
+
+            <div class="api-item">
+                <h3><span class="method delete">DELETE</span> /official-api/news/{id}</h3>
+                <p><strong>描述:</strong> 删除新闻文章</p>
+                <p><strong>认证:</strong> 需要 JWT Token</p>
+            </div>
+
+            <div class="api-item">
+                <h3><span class="method patch">PATCH</span> /official-api/news/{id}/status</h3>
+                <p><strong>描述:</strong> 设置文章状态</p>
+                <p><strong>认证:</strong> 需要 JWT Token</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/swagger-ui-dist@3/swagger-ui-bundle.js"></script>
+    <script src="https://unpkg.com/swagger-ui-dist@3/swagger-ui-standalone-preset.js"></script>
+    <script>
+        // 手动构建 API 文档
+        const apiDoc = {
+            openapi: '3.0.0',
+            info: {
+                title: '官方网站后台 API',
+                version: '2.0.0',
+                description: '官方网站后台系统API文档\n\n## 认证说明\n本API使用JWT Bearer Token进行认证。请在请求头中添加：\n`Authorization: Bearer <your_jwt_token>`'
+            },
+            servers: [
+                { url: 'http://localhost:8000', description: 'Symfony 服务器 (主要API)' },
+                { url: 'http://localhost:8001', description: '简单API服务器 (带CORS修复)' },
+                { url: 'http://localhost:8002', description: '测试服务器' }
+            ],
+            components: {
+                securitySchemes: {
+                    bearerAuth: {
+                        type: 'http',
+                        scheme: 'bearer',
+                        bearerFormat: 'JWT',
+                        description: 'JWT Bearer Token认证'
+                    }
+                }
+            },
+            security: [
+                { bearerAuth: [] }
+            ],
+            paths: {
+                '/api/health': {
+                    get: {
+                        summary: '健康检查',
+                        description: '健康检查接口，用于验证API服务是否正常运行',
+                        tags: ['系统状态'],
+                        responses: {
+                            200: {
+                                description: '服务正常',
+                                content: {
+                                    'application/json': {
+                                        schema: {
+                                            type: 'object',
+                                            properties: {
+                                                status: { type: 'string', example: 'ok' },
+                                                timestamp: { type: 'string', example: '2025-11-25T05:35:00+00:00' },
+                                                service: { type: 'string', example: '官方网站后台API' },
+                                                version: { type: 'string', example: '2.0.0' }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                '/api/test': {
+                    get: {
+                        summary: '测试API',
+                        description: '测试API端点',
+                        tags: ['测试'],
+                        responses: {
+                            200: {
+                                description: '成功响应',
+                                content: {
+                                    'application/json': {
+                                        schema: {
+                                            type: 'object',
+                                            properties: {
+                                                message: { type: 'string', example: 'Hello World' }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                '/official-api/news': {
+                    get: {
+                        summary: '获取新闻文章列表',
+                        description: '获取新闻文章列表，支持多条件查询和分页',
+                        tags: ['新闻文章管理'],
+                        security: [{ bearerAuth: [] }],
+                        parameters: [
+                            { name: 'page', in: 'query', schema: { type: 'integer', default: 1 }, description: '页码（从1开始）' },
+                            { name: 'limit', in: 'query', schema: { type: 'integer', default: 20 }, description: '每页数量' },
+                            { name: 'status', in: 'query', schema: { type: 'integer' }, description: '状态（1=激活，2=非激活）' },
+                            { name: 'categoryCode', in: 'query', schema: { type: 'string' }, description: '分类编码' }
+                        ],
+                        responses: {
+                            200: {
+                                description: '获取成功',
+                                content: {
+                                    'application/json': {
+                                        schema: {
+                                            type: 'object',
+                                            properties: {
+                                                code: { type: 'integer', example: 200 },
+                                                message: { type: 'string', example: 'success' },
+                                                data: {
+                                                    type: 'object',
+                                                    properties: {
+                                                        items: { type: 'array', items: { type: 'object' } },
+                                                        total: { type: 'integer', example: 100 },
+                                                        page: { type: 'integer', example: 1 },
+                                                        limit: { type: 'integer', example: 20 }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    post: {
+                        summary: '创建新闻文章',
+                        description: '创建新的新闻文章',
+                        tags: ['新闻文章管理'],
+                        security: [{ bearerAuth: [] }],
+                        requestBody: {
+                            required: true,
+                            content: {
+                                'application/json': {
+                                    schema: {
+                                        type: 'object',
+                                        required: ['name', 'cover', 'content', 'category'],
+                                        properties: {
+                                            name: { type: 'string', description: '文章名称' },
+                                            cover: { type: 'string', description: '封面图片' },
+                                            content: { type: 'string', description: '文章内容' },
+                                            category: { type: 'string', description: '分类ID或分类编码' },
+                                            status: { type: 'integer', description: '状态（1=激活，2=非激活）' }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        responses: {
+                            201: {
+                                description: '创建成功',
+                                content: {
+                                    'application/json': {
+                                        schema: {
+                                            type: 'object',
+                                            properties: {
+                                                code: { type: 'integer', example: 201 },
+                                                message: { type: 'string', example: '创建成功' },
+                                                data: { type: 'object' }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        };
+
+        // 初始化 Swagger UI
+        const ui = SwaggerUIBundle({
+            spec: apiDoc,
+            dom_id: '#swagger-ui',
+            deepLinking: true,
+            presets: [
+                SwaggerUIBundle.presets.apis,
+                SwaggerUIStandalonePreset
+            ],
+            plugins: [
+                SwaggerUIBundle.plugins.DownloadUrl
+            ],
+            layout: "StandaloneLayout",
+            supportedSubmitMethods: ['get', 'post', 'put', 'delete', 'patch'],
+            tryItOutEnabled: true,
+            requestInterceptor: function (request) {
+                request.headers['Accept'] = 'application/json';
+                return request;
+            }
+        });
+
+        // 动态更新 Base URL 和服务器选择
+        function updateServerUrl() {
+            const currentPort = window.location.port;
+            let serverUrl = 'http://localhost:8000'; // 默认Symfony服务器
+
+            // 根据当前访问的端口智能选择API服务器
+            if (currentPort === '8000') {
+                serverUrl = 'http://localhost:8000';
+            } else if (currentPort === '8001') {
+                serverUrl = 'http://localhost:8001';
+            } else if (currentPort === '8002') {
+                serverUrl = 'http://localhost:8002';
+            }
+
+            document.getElementById('baseUrl').textContent = serverUrl;
+
+            // 更新Swagger UI的服务器URL
+            if (window.ui) {
+                window.ui.specActions.updateServer(serverUrl);
+            }
+        }
+
+        // 页面加载完成后更新URL
+        document.addEventListener('DOMContentLoaded', function () {
+            updateServerUrl();
+        });
+
+        // 将ui对象暴露到全局作用域以便更新
+        window.ui = ui;
+
+
+    </script>
+</body>
+
+</html>

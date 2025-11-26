@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>CORS Test</title>
+</head>
+
+<body>
+    <h1>CORS Error Test</h1>
+    <button onclick="testFetch()">Test API Call</button>
+    <div id="result"></div>
+
+    <script>
+        function testFetch() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Testing...';
+
+            // 测试不同的URL格式来重现错误
+            const testUrls = [
+                'http://127.0.0.1:8001/api/health',
+                'http://localhost:8001/api/health',
+                '//127.0.0.1:8001/api/health',
+                '//localhost:8001/api/health'
+            ];
+
+            testUrls.forEach((url, index) => {
+                fetch(url)
+                    .then(response => response.json())
+                    .then(data => {
+                        resultDiv.innerHTML += `<p>✅ ${url}: Success</p>`;
+                    })
+                    .catch(error => {
+                        resultDiv.innerHTML += `<p>❌ ${url}: ${error.message}</p>`;
+                        console.error('Error for', url, error);
+                    });
+            });
+        }
+    </script>
+</body>
+
+</html>

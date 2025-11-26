@@ -1,0 +1,54 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}用户登录 - 官方网站后台{% endblock %}
+
+{% block body %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">用户登录</h4>
+                </div>
+                <div class="card-body">
+                    {% if error %}
+                        <div class="alert alert-danger" role="alert">
+                            {{ error.messageKey|trans(error.messageData, 'security') }}
+                        </div>
+                    {% endif %}
+
+                    <form method="post">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">用户名</label>
+                            <input type="text"
+                                   value="{{ last_username }}"
+                                   name="_username"
+                                   id="username"
+                                   class="form-control"
+                                   autocomplete="username"
+                                   required
+                                   autofocus>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">密码</label>
+                            <input type="password"
+                                   name="_password"
+                                   id="password"
+                                   class="form-control"
+                                   autocomplete="current-password"
+                                   required>
+                        </div>
+
+                        {# CSRF令牌保护 #}
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">登录</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

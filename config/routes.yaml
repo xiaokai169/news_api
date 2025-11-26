@@ -1,0 +1,19 @@
+controllers:
+    resource:
+        path: ../src/Controller/
+        namespace: App\Controller
+    type: attribute
+
+# Include routes from config/routes directory
+api_platform:
+    resource: ../config/routes/api_platform.yaml
+
+# Swagger UI documentation routes
+nelmio_api_doc:
+    resource: ../config/routes/nelmio_api_doc.yaml
+
+framework:
+    resource: ../config/routes/framework.yaml
+
+security:
+    resource: ../config/routes/security.yaml
