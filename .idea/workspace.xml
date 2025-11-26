@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="a4bea2dc-7065-459e-9015-cdf86c089474" name="更改" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/official_website_backend.iml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/php.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/API_DOCUMENTATION_TEST_REPORT.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/API_FINAL_SOLUTION_SUMMARY.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/API_PREFIX_FIX_SOLUTION.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/CHECK_REPORT.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/CONTROLLER_REFACTOR_COMPARISON.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/CORS_FIX_COMPLETE_REPORT.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DEPLOYMENT_COMPLETE.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/IP_WHITELIST_CONFIGURATION_GUIDE.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/IP_WHITELIST_RESOLUTION.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/MULTI_DATABASE_AUTHENTICATION_COMPLETE.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/MULTI_DATABASE_AUTHENTICATION_GUIDE.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/NEWS_ARTICLE_SYSTEM_GUIDE.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/NEWS_CONTROLLER_JWT_IMPLEMENTATION_SUMMARY.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/NEWS_USER_INTEGRATION_COMPLETE.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/PRODUCTION_SETUP.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/QUERY_CONDITIONS_VALIDATION.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SWAGGER_UI_SETUP_GUIDE.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SYNC_ISSUE_ANALYSIS.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SYSTEM_VALIDATION_REPORT.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TECHNICAL_DOCUMENTATION.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WECHAT_API_FIX_REPORT.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WECHAT_API_GUIDE.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WECHAT_ARTICLE_ROUTE_FIX_SUMMARY.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WECHAT_CONTROLLER_REFACTOR_COMPARISON.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WECHAT_IP_WHITELIST_SOLUTION.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WECHAT_PUBLISHED_ARTICLES_GUIDE.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WECHAT_SYNC_API_TEST_REPORT.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/api_final.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/api_fixed.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/api_simple.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/api_simple_fixed.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/api_with_prefix.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/cors_test_complete.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/create_wechat_table.sql" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/doctrine_dto_implementation_success_report.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/doctrine_dto_solution_example.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/start_server.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/swagger_complete.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/test_cors_error.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/update_database_schema.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/update_news_name_length.sql" beforeDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ComposerSettings" synchronizationState="SYNCHRONIZE">
+    <pharConfigPath>$PROJECT_DIR$/composer.json</pharConfigPath>
+    <execution />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="PHP File" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file://$PROJECT_DIR$/vendor/symfony/framework-bundle/Controller/AbstractController.php" root0="FORCE_HIGHLIGHTING" root1="SKIP_INSPECTION" />
+    <setting file="file://$PROJECT_DIR$/vendor/symfony/http-foundation/JsonResponse.php" root0="FORCE_HIGHLIGHTING" root1="SKIP_INSPECTION" />
+    <setting file="file://$PROJECT_DIR$/vendor/symfony/http-foundation/Response.php" root0="FORCE_HIGHLIGHTING" root1="SKIP_INSPECTION" />
+    <setting file="file://$PROJECT_DIR$/vendor/symfony/http-kernel/Exception/HttpException.php" root0="FORCE_HIGHLIGHTING" root1="SKIP_INSPECTION" />
+    <setting file="file://$PROJECT_DIR$/vendor/symfony/http-kernel/Exception/HttpExceptionInterface.php" root0="FORCE_HIGHLIGHTING" root1="SKIP_INSPECTION" />
+  </component>
+  <component name="PhpDebugGeneral" listening_started="true" />
+  <component name="PhpWorkspaceProjectConfiguration" interpreter_name="D:\php\php-8.3.12-Win32-vs16-x64\php.exe">
+    <include_path>
+      <path value="$PROJECT_DIR$/vendor/psr/event-dispatcher" />
+      <path value="$PROJECT_DIR$/vendor/psr/log" />
+      <path value="$PROJECT_DIR$/vendor/psr/cache" />
+      <path value="$PROJECT_DIR$/vendor/psr/container" />
+      <path value="$PROJECT_DIR$/vendor/doctrine/instantiator" />
+      <path value="$PROJECT_DIR$/vendor/doctrine/event-manager" />
+      <path value="$PROJECT_DIR$/vendor/doctrine/orm" />
+      <path value="$PROJECT_DIR$/vendor/doctrine/dbal" />
+      <path value="$PROJECT_DIR$/vendor/doctrine/collections" />
+      <path value="$PROJECT_DIR$/vendor/doctrine/doctrine-bundle" />
+      <path value="$PROJECT_DIR$/vendor/doctrine/sql-formatter" />
+      <path value="$PROJECT_DIR$/vendor/doctrine/persistence" />
+      <path value="$PROJECT_DIR$/vendor/doctrine/deprecations" />
+      <path value="$PROJECT_DIR$/vendor/doctrine/lexer" />
+      <path value="$PROJECT_DIR$/vendor/doctrine/migrations" />
+      <path value="$PROJECT_DIR$/vendor/doctrine/inflector" />
+      <path value="$PROJECT_DIR$/vendor/doctrine/doctrine-migrations-bundle" />
+      <path value="$PROJECT_DIR$/vendor/nikic/php-parser" />
+      <path value="$PROJECT_DIR$/vendor/composer" />
+      <path value="$PROJECT_DIR$/vendor/symfony/cache-contracts" />
+      <path value="$PROJECT_DIR$/vendor/symfony/deprecation-contracts" />
+      <path value="$PROJECT_DIR$/vendor/symfony/polyfill-mbstring" />
+      <path value="$PROJECT_DIR$/vendor/symfony/routing" />
+      <path value="$PROJECT_DIR$/vendor/symfony/runtime" />
+      <path value="$PROJECT_DIR$/vendor/symfony/filesystem" />
+      <path value="$PROJECT_DIR$/vendor/symfony/config" />
+      <path value="$PROJECT_DIR$/vendor/symfony/event-dispatcher-contracts" />
+      <path value="$PROJECT_DIR$/vendor/symfony/error-handler" />
+      <path value="$PROJECT_DIR$/vendor/symfony/console" />
+      <path value="$PROJECT_DIR$/vendor/symfony/maker-bundle" />
+      <path value="$PROJECT_DIR$/vendor/symfony/flex" />
+      <path value="$PROJECT_DIR$/vendor/symfony/stopwatch" />
+      <path value="$PROJECT_DIR$/vendor/symfony/polyfill-php83" />
+      <path value="$PROJECT_DIR$/vendor/symfony/var-exporter" />
+      <path value="$PROJECT_DIR$/vendor/symfony/polyfill-intl-normalizer" />
+      <path value="$PROJECT_DIR$/vendor/symfony/polyfill-php84" />
+      <path value="$PROJECT_DIR$/vendor/symfony/doctrine-bridge" />
+      <path value="$PROJECT_DIR$/vendor/symfony/polyfill-intl-grapheme" />
+      <path value="$PROJECT_DIR$/vendor/symfony/dependency-injection" />
+      <path value="$PROJECT_DIR$/vendor/symfony/cache" />
+      <path value="$PROJECT_DIR$/vendor/symfony/dotenv" />
+      <path value="$PROJECT_DIR$/vendor/symfony/process" />
+      <path value="$PROJECT_DIR$/vendor/symfony/finder" />
+      <path value="$PROJECT_DIR$/vendor/symfony/var-dumper" />
+      <path value="$PROJECT_DIR$/vendor/symfony/event-dispatcher" />
+      <path value="$PROJECT_DIR$/vendor/symfony/framework-bundle" />
+      <path value="$PROJECT_DIR$/vendor/symfony/http-foundation" />
+      <path value="$PROJECT_DIR$/vendor/symfony/service-contracts" />
+      <path value="$PROJECT_DIR$/vendor/symfony/http-kernel" />
+      <path value="$PROJECT_DIR$/vendor/symfony/yaml" />
+      <path value="$PROJECT_DIR$/vendor/symfony/string" />
+      <path value="$PROJECT_DIR$/vendor/doctrine/common" />
+      <path value="$PROJECT_DIR$/vendor/symfony/asset" />
+      <path value="$PROJECT_DIR$/vendor/symfony/twig-bridge" />
+      <path value="$PROJECT_DIR$/vendor/symfony/translation-contracts" />
+      <path value="$PROJECT_DIR$/vendor/symfony/security-http" />
+      <path value="$PROJECT_DIR$/vendor/symfony/security-core" />
+      <path value="$PROJECT_DIR$/vendor/symfony/serializer" />
+      <path value="$PROJECT_DIR$/vendor/symfony/web-link" />
+      <path value="$PROJECT_DIR$/vendor/symfony/uid" />
+      <path value="$PROJECT_DIR$/vendor/symfony/type-info" />
+      <path value="$PROJECT_DIR$/vendor/symfony/password-hasher" />
+      <path value="$PROJECT_DIR$/vendor/phpstan/phpdoc-parser" />
+      <path value="$PROJECT_DIR$/vendor/symfony/property-info" />
+      <path value="$PROJECT_DIR$/vendor/twig/twig" />
+      <path value="$PROJECT_DIR$/vendor/nelmio/api-doc-bundle" />
+      <path value="$PROJECT_DIR$/vendor/nelmio/cors-bundle" />
+      <path value="$PROJECT_DIR$/vendor/zircote/swagger-php" />
+      <path value="$PROJECT_DIR$/vendor/webmozart/assert" />
+      <path value="$PROJECT_DIR$/vendor/api-platform/symfony" />
+      <path value="$PROJECT_DIR$/vendor/api-platform/documentation" />
+      <path value="$PROJECT_DIR$/vendor/api-platform/metadata" />
+      <path value="$PROJECT_DIR$/vendor/api-platform/json-schema" />
+      <path value="$PROJECT_DIR$/vendor/api-platform/doctrine-orm" />
+      <path value="$PROJECT_DIR$/vendor/phpdocumentor/reflection-common" />
+      <path value="$PROJECT_DIR$/vendor/phpdocumentor/reflection-docblock" />
+      <path value="$PROJECT_DIR$/vendor/api-platform/doctrine-common" />
+      <path value="$PROJECT_DIR$/vendor/api-platform/hydra" />
+      <path value="$PROJECT_DIR$/vendor/api-platform/jsonld" />
+      <path value="$PROJECT_DIR$/vendor/api-platform/openapi" />
+      <path value="$PROJECT_DIR$/vendor/api-platform/http-cache" />
+      <path value="$PROJECT_DIR$/vendor/api-platform/validator" />
+      <path value="$PROJECT_DIR$/vendor/api-platform/state" />
+      <path value="$PROJECT_DIR$/vendor/api-platform/serializer" />
+      <path value="$PROJECT_DIR$/vendor/willdurand/negotiation" />
+      <path value="$PROJECT_DIR$/vendor/phpdocumentor/type-resolver" />
+      <path value="$PROJECT_DIR$/vendor/symfony/property-access" />
+      <path value="$PROJECT_DIR$/vendor/symfony/validator" />
+      <path value="$PROJECT_DIR$/vendor/symfony/twig-bundle" />
+      <path value="$PROJECT_DIR$/vendor/symfony/options-resolver" />
+      <path value="$PROJECT_DIR$/vendor/symfony/security-csrf" />
+      <path value="$PROJECT_DIR$/vendor/symfony/clock" />
+      <path value="$PROJECT_DIR$/vendor/symfony/polyfill-uuid" />
+      <path value="$PROJECT_DIR$/vendor/symfony/expression-language" />
+      <path value="$PROJECT_DIR$/vendor/symfony/security-bundle" />
+      <path value="$PROJECT_DIR$/vendor/psr/clock" />
+      <path value="$PROJECT_DIR$/vendor/psr/link" />
+      <path value="$PROJECT_DIR$/vendor/symfony/http-client" />
+      <path value="$PROJECT_DIR$/vendor/symfony/http-client-contracts" />
+      <path value="$PROJECT_DIR$/vendor/lexik/jwt-authentication-bundle" />
+      <path value="$PROJECT_DIR$/vendor/lcobucci/clock" />
+      <path value="$PROJECT_DIR$/vendor/lcobucci/jwt" />
+    </include_path>
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 6
+}</component>
+  <component name="ProjectId" id="34r737c1yR0de8rtW4nZETxpBss" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "git-widget-placeholder": "master",
+    "last_opened_file_path": "//wsl.localhost/Ubuntu/www/wwwroot/official_website_backend",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "preferences.pluginManager",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-js-predefined-d6986cc7102b-3aa1da707db6-JavaScript-PS-252.26830.95" />
+        <option value="bundled-php-predefined-a98d8de5180a-9b563d34894c-com.jetbrains.php.sharedIndexes-PS-252.26830.95" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="默认任务">
+      <changelist id="a4bea2dc-7065-459e-9015-cdf86c089474" name="更改" comment="" />
+      <created>1761959634732</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1761959634732</updated>
+      <workItem from="1761959636106" duration="12847000" />
+      <workItem from="1762160539170" duration="258000" />
+      <workItem from="1762220800404" duration="8672000" />
+      <workItem from="1762304450786" duration="1339000" />
+      <workItem from="1762306650374" duration="9000" />
+      <workItem from="1762410185052" duration="1350000" />
+      <workItem from="1762415701009" duration="59000" />
+      <workItem from="1762415772016" duration="189000" />
+      <workItem from="1762415992657" duration="907000" />
+      <workItem from="1762417443805" duration="108000" />
+      <workItem from="1762417579007" duration="1134000" />
+      <workItem from="1762477135583" duration="4761000" />
+      <workItem from="1762737340654" duration="229000" />
+      <workItem from="1762737588838" duration="906000" />
+      <workItem from="1762738752743" duration="9000" />
+      <workItem from="1762738797328" duration="24000" />
+      <workItem from="1762738984504" duration="1040000" />
+      <workItem from="1762745705202" duration="49000" />
+      <workItem from="1762745805927" duration="49000" />
+      <workItem from="1762745890775" duration="242000" />
+      <workItem from="1762746288578" duration="120000" />
+      <workItem from="1762746422377" duration="114000" />
+      <workItem from="1762746718487" duration="52000" />
+      <workItem from="1762747029289" duration="56000" />
+      <workItem from="1762747099357" duration="1964000" />
+      <workItem from="1762765012715" duration="3000" />
+      <workItem from="1762995537536" duration="17995000" />
+      <workItem from="1763082277939" duration="4747000" />
+      <workItem from="1763089734928" duration="10469000" />
+      <workItem from="1763427624688" duration="4347000" />
+      <workItem from="1763599905091" duration="8794000" />
+      <workItem from="1763686566324" duration="5223000" />
+      <workItem from="1764122240666" duration="5111000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+</project>

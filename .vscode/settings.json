@@ -1,0 +1,19 @@
+{
+    "terminal.integrated.env.windows": {
+        "WSL_UTF8": "1"
+    },
+    "terminal.integrated.profiles.windows": {
+        "WSL": {
+            "path": "wsl.exe",
+            "args": ["-d", "Ubuntu"],
+            "env": {
+                "LANG": "C.UTF-8",
+                "LC_ALL": "C.UTF-8",
+                "WSL_UTF8": "1"
+            }
+        }
+    },
+    "terminal.integrated.defaultProfile.windows": "WSL",
+    "files.encoding": "utf8",
+    "files.autoGuessEncoding": true
+}
