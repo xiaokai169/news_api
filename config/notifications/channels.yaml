@@ -1,0 +1,67 @@
+notification_channels:
+  email:
+    enabled: true
+    smtp_server: smtp.example.com
+    smtp_port: 587
+    username: alerts@example.com
+    password: [SMTP密码]
+    from_address: alerts@example.com
+    to_addresses:
+      - admin@example.com
+      - ops@example.com
+    templates:
+      subject: "[{severity}] {alert_name} - 系统告警"
+      body: |
+        告警详情:
+        - 告警名称: {alert_name}
+        - 严重程度: {severity}
+        - 触发时间: {triggered_at}
+        - 当前指标: {metrics}
+        - 描述信息: {description}
+        - 升级级别: {escalation_level}
+
+  webhook:
+    enabled: true
+    endpoints:
+      - name: slack
+        url: https://hooks.slack.com/services/XXX/YYY/ZZZ
+        method: POST
+        headers:
+          Content-Type: application/json
+        template: |
+          {
+            "text": "🚨 系统告警\\n{alert_name}\\n{severity}\\n{message}"
+          }
+
+      - name: dingtalk
+        url: https://oapi.dingtalk.com/robot/send?access_token=XXX
+        method: POST
+        headers:
+          Content-Type: application/json
+        template: |
+          {
+            "msgtype": "text",
+            "text": {
+              "content": "🚨 系统告警\\n告警名称: {alert_name}\\n严重程度: {severity}\\n消息: {message}"
+            }
+          }
+
+  sms:
+    enabled: true
+    provider: aliyun
+    access_key: [阿里云AccessKey]
+    access_secret: [阿里云AccessSecret]
+    sign_name: 系统告警
+    template_code: SMS_123456789
+    phone_numbers:
+      - 13800138000
+      - 13900139000
+
+  phone:
+    enabled: false
+    provider: twilio
+    account_sid: [Twilio Account SID]
+    auth_token: [Twilio Auth Token]
+    from_number: +1234567890
+    to_numbers:
+      - +8613800138000

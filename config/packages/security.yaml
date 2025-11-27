@@ -50,6 +50,8 @@ security:
         # 临时允许API访问用于测试验证功能
         # 生产环境中应该启用认证
         - { path: ^/official-api, roles: PUBLIC_ACCESS }
+        # 允许匿名访问公共API接口
+        - { path: ^/public-api, roles: PUBLIC_ACCESS }
         # 允许匿名访问静态资源
         - { path: ^/(css|js|images)/, roles: PUBLIC_ACCESS }
         # 其他所有路径都需要认证

@@ -1,0 +1,20 @@
+CREATE TABLE article_read_logs (
+    id INT AUTO_INCREMENT NOT NULL,
+    article_id INT NOT NULL,
+    user_id INT DEFAULT 0 NOT NULL,
+    ip_address VARCHAR(45) DEFAULT NULL,
+    user_agent VARCHAR(500) DEFAULT NULL,
+    read_time DATETIME NOT NULL,
+    session_id VARCHAR(255) DEFAULT NULL,
+    device_type VARCHAR(50) DEFAULT NULL,
+    referer VARCHAR(500) DEFAULT NULL,
+    duration_seconds INT DEFAULT 0 NOT NULL,
+    is_completed TINYINT(1) DEFAULT 0 NOT NULL,
+    created_at DATETIME NOT NULL,
+    INDEX idx_article_read_logs_article_id (article_id),
+    INDEX idx_article_read_logs_user_id (user_id),
+    INDEX idx_article_read_logs_read_time (read_time),
+    INDEX idx_article_read_logs_ip_address (ip_address),
+    INDEX idx_article_read_logs_session_article (session_id, article_id),
+    PRIMARY KEY(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

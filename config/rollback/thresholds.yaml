@@ -1,0 +1,94 @@
+# 回滚触发阈值配置
+thresholds:
+  # 响应时间阈值（毫秒）
+  response_time:
+    max: 5000
+    warning: 3000
+
+  # 错误率阈值（百分比）
+  error_rate:
+    max: 10.0
+    warning: 5.0
+
+  # 内存使用率阈值（百分比）
+  memory_usage:
+    max: 90.0
+    warning: 80.0
+
+  # CPU使用率阈值（百分比）
+  cpu_usage:
+    max: 85.0
+    warning: 75.0
+
+  # 数据库连接数阈值
+  db_connections:
+    max: 100
+    warning: 80
+
+  # 磁盘使用率阈值（百分比）
+  disk_usage:
+    max: 95.0
+    warning: 85.0
+
+  # 并发连接数阈值
+  concurrent_connections:
+    max: 1000
+    warning: 800
+
+  # 5xx错误率阈值（百分比）
+  error_5xx_rate:
+    max: 5.0
+    warning: 2.0
+
+  # 数据库查询时间阈值（秒）
+  db_query_time:
+    max: 10.0
+    warning: 5.0
+
+  # SSL证书过期天数阈值
+  ssl_expiry_days:
+    max: 30
+    warning: 60
+
+# 回滚策略配置
+rollback_strategy:
+  # 自动回滚条件
+  auto_rollback:
+    enabled: true
+    consecutive_failures: 3
+    time_window: 5m
+
+  # 手动确认阈值
+  manual_confirmation:
+    response_time: 10000
+    error_rate: 20.0
+    memory_usage: 95.0
+
+  # 回滚冷却时间
+  cooldown_period: 15m
+
+  # 最大回滚次数
+  max_rollback_attempts: 3
+
+  # 回滚超时时间
+  timeout: 10m
+
+# 健康检查配置
+health_check:
+  # 检查间隔
+  interval: 30s
+
+  # 超时时间
+  timeout: 10s
+
+  # 重试次数
+  retries: 3
+
+  # 检查端点
+  endpoints:
+    - /health
+    - /api/news
+    - /api/articles
+
+  # 成功率阈值
+  success_rate_threshold: 95.0

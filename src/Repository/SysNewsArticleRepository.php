@@ -639,4 +639,43 @@ class SysNewsArticleRepository extends ServiceEntityRepository
             'pages' => ceil($total / $filterDto->getLimit())
         ];
     }
+
+    /**
+     * 获取公共访问的新闻文章列表（只返回已发布且未删除的文章）
+     */
+    public function findActivePublicArticles(?int $limit = null, ?int $offset = null): array
+    {
+        $qb = $this->createQueryBuilder('article')
+            ->leftJoin('article.category', 'category')
+            ->addSelect('category')
+            ->where('article.status = :activeStatus')
+            ->andWhere('article.status != :deletedStatus')
+            ->setParameter('activeStatus', SysNewsArticle::STATUS_ACTIVE)
+            ->setParameter('deletedStatus', SysNewsArticle::STATUS_DELETED)
+            ->orderBy('article.createTime', 'DESC');
+
+        if ($limit !== null) {
+            $qb->setMaxResults($limit);
+        }
+        if ($offset !== null) {
+            $qb->setFirstResult($offset);
+        }
+
+        return $qb->getQuery()->getResult();
+    }
+
+    /**
+     * 统计公共访问的新闻文章数量
+     */
+    public function countActivePublicArticles(): int
+    {
+        return (int) $this->createQueryBuilder('article')
+            ->select('COUNT(article.id)')
+            ->where('article.status = :activeStatus')
+            ->andWhere('article.status != :deletedStatus')
+            ->setParameter('activeStatus', SysNewsArticle::STATUS_ACTIVE)
+            ->setParameter('deletedStatus', SysNewsArticle::STATUS_DELETED)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
 }

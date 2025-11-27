@@ -369,6 +369,9 @@ class WechatController extends AbstractController
     #[Route('/articles/{id}', name: 'api_wechat_article_show', methods: ['GET'])]
     public function getArticle(int $id): JsonResponse
     {
+        // 添加调试日志
+        error_log('[DEBUG] WechatController::getArticle - 访问微信文章详情接口，ID: ' . $id);
+
         try {
             $article = $this->articleRepository->find($id);
 

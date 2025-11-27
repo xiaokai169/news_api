@@ -1,0 +1,94 @@
+alerts:
+  # 应用错误率告警
+  application_error_rate:
+    enabled: true
+    threshold: 5.0  # 错误率百分比
+    window: 5m      # 时间窗口
+    severity: critical
+    description: "应用错误率超过阈值"
+    condition: "error_rate > threshold"
+
+  # 响应时间告警
+  response_time:
+    enabled: true
+    threshold: 5000  # 响应时间（毫秒）
+    window: 2m
+    severity: warning
+    description: "API响应时间过长"
+    condition: "avg_response_time > threshold"
+
+  # 数据库连接告警
+  database_connections:
+    enabled: true
+    threshold: 80    # 连接使用率百分比
+    window: 1m
+    severity: critical
+    description: "数据库连接数过多"
+    condition: "connection_usage > threshold"
+
+  # CPU使用率告警
+  cpu_usage:
+    enabled: true
+    threshold: 80    # CPU使用率百分比
+    window: 3m
+    severity: warning
+    description: "CPU使用率过高"
+    condition: "cpu_usage > threshold"
+
+  # 内存使用率告警
+  memory_usage:
+    enabled: true
+    threshold: 85    # 内存使用率百分比
+    window: 2m
+    severity: critical
+    description: "内存使用率过高"
+    condition: "memory_usage > threshold"
+
+  # 磁盘空间告警
+  disk_usage:
+    enabled: true
+    threshold: 90    # 磁盘使用率百分比
+    window: 5m
+    severity: critical
+    description: "磁盘空间不足"
+    condition: "disk_usage > threshold"
+
+  # SSL证书过期告警
+  ssl_certificate_expiry:
+    enabled: true
+    threshold: 30     # 过期天数
+    window: 1h
+    severity: warning
+    description: "SSL证书即将过期"
+    condition: "days_until_expiry < threshold"
+
+  # 慢查询告警
+  slow_queries:
+    enabled: true
+    threshold: 10     # 慢查询数量
+    window: 5m
+    severity: warning
+    description: "慢查询数量过多"
+    condition: "slow_query_count > threshold"
+
+  # 安全事件告警
+  security_events:
+    enabled: true
+    threshold: 5      # 失败登录次数
+    window: 1m
+    severity: critical
+    description: "检测到可疑安全事件"
+    condition: "failed_login_count > threshold"
+
+# 告警升级策略
+escalation:
+  levels:
+    - level: 1
+      delay: 5m
+      channels: ["email", "webhook"]
+    - level: 2
+      delay: 15m
+      channels: ["email", "webhook", "sms"]
+    - level: 3
+      delay: 30m
+      channels: ["email", "webhook", "sms", "phone"]

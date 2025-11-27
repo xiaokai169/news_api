@@ -223,14 +223,29 @@ class NewsController extends AbstractController
             $total = $this->sysNewsArticleRepository->countByFilterDto($filterDto);
             $pages = (int)ceil($total / $filterDto->getLimit());
 
+            // 为每篇文章添加阅读统计信息
+            $articlesWithStats = [];
+            foreach ($articles as $article) {
+                $articleData = $this->serializer->normalize($article, null, ['groups' => ['sysNewsArticle:read']]);
+
+                // 添加阅读统计信息
+                $articleData['viewCount'] = $article->getViewCount();
+                $articleData['formattedViewCount'] = $article->getFormattedViewCount();
+                $articleData['readHeatLevel'] = $article->getReadHeatLevel();
+                $articleData['readHeatDescription'] = $article->getReadHeatDescription();
+                $articleData['isPopular'] = $article->isPopular();
+                $articleData['isExplosive'] = $article->isExplosive();
+
+                $articlesWithStats[] = $articleData;
+            }
+
             return $this->apiResponse->paginated(
-                items: $articles,
+                items: $articlesWithStats,
                 total: $total,
                 page: $filterDto->getPage(),
                 limit: $filterDto->getLimit(),
                 pages: $pages,
-                request: $request,
-                context: ['groups' => ['sysNewsArticle:read']]
+                request: $request
             );
 
         } catch (\Exception $e) {
@@ -244,6 +259,10 @@ class NewsController extends AbstractController
     #[Route('/{id}', name: 'api_news_show', methods: ['GET'])]
     public function show(int $id, Request $request): JsonResponse
     {
+        // 添加调试日志
+        error_log('[DEBUG] NewsController::show - 访问文章详情接口，ID: ' . $id);
+        error_log('[DEBUG] NewsController::show - 当前安全配置是否禁用认证: ' . (var_dump($this->container->get('security.authorization_checker') === null ? 'true' : 'false')));
+
         try {
             // 是否包含用户信息
             $includeUser = $request->query->get('includeUser', 'false');
@@ -263,7 +282,18 @@ class NewsController extends AbstractController
                 return $this->apiResponse->error('新闻文章已被删除', Response::HTTP_NOT_FOUND);
             }
 
-            return $this->apiResponse->success($article, Response::HTTP_OK, ['groups' => ['sysNewsArticle:read']]);
+            // 添加阅读数量信息
+            $articleData = $this->serializer->normalize($article, null, ['groups' => ['sysNewsArticle:read']]);
+
+            // 添加阅读统计信息
+            $articleData['viewCount'] = $article->getViewCount();
+            $articleData['formattedViewCount'] = $article->getFormattedViewCount();
+            $articleData['readHeatLevel'] = $article->getReadHeatLevel();
+            $articleData['readHeatDescription'] = $article->getReadHeatDescription();
+            $articleData['isPopular'] = $article->isPopular();
+            $articleData['isExplosive'] = $article->isExplosive();
+
+            return $this->apiResponse->success($articleData, Response::HTTP_OK);
 
         } catch (\Exception $e) {
             return $this->apiResponse->error('查询失败: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);

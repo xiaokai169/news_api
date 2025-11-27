@@ -197,6 +197,7 @@
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
     "git-widget-placeholder": "master",
     "last_opened_file_path": "//wsl.localhost/Ubuntu/www/wwwroot/official_website_backend",
     "node.js.detected.package.eslint": "true",
@@ -256,6 +257,7 @@
       <workItem from="1763599905091" duration="8794000" />
       <workItem from="1763686566324" duration="5223000" />
       <workItem from="1764122240666" duration="5111000" />
+      <workItem from="1764205189077" duration="1784000" />
     </task>
     <servers />
   </component>

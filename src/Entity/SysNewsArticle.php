@@ -87,6 +87,10 @@ class SysNewsArticle
     #[Groups(['sysNewsArticle:read'])]
     private ?\DateTimeInterface $createTime = null;
 
+    #[ORM\Column(name: 'view_count', type: Types::INTEGER, options: ['default' => 0])]
+    #[Groups(['sysNewsArticle:read'])]
+    private int $viewCount = 0;
+
     public function __construct()
     {
         // 移除这里的初始化，让生命周期回调来处理
@@ -427,5 +431,98 @@ class SysNewsArticle
             self::STATUS_DELETED => '已删除',
             default => '未知状态'
         };
+    }
+
+    /**
+     * 获取阅读数量
+     */
+    public function getViewCount(): int
+    {
+        return $this->viewCount;
+    }
+
+    /**
+     * 设置阅读数量
+     */
+    public function setViewCount(int $viewCount): self
+    {
+        $this->viewCount = $viewCount;
+        return $this;
+    }
+
+    /**
+     * 增加阅读数量
+     */
+    public function incrementViewCount(int $increment = 1): self
+    {
+        $this->viewCount += $increment;
+        return $this;
+    }
+
+    /**
+     * 获取格式化的阅读数量
+     */
+    public function getFormattedViewCount(): string
+    {
+        if ($this->viewCount < 1000) {
+            return (string) $this->viewCount;
+        } elseif ($this->viewCount < 10000) {
+            return number_format($this->viewCount / 1000, 1) . 'k';
+        } elseif ($this->viewCount < 1000000) {
+            return number_format($this->viewCount / 1000, 0) . 'k';
+        } elseif ($this->viewCount < 1000000000) {
+            return number_format($this->viewCount / 1000000, 1) . 'M';
+        } else {
+            return number_format($this->viewCount / 1000000, 0) . 'M';
+        }
+    }
+
+    /**
+     * 获取阅读热度等级
+     */
+    public function getReadHeatLevel(): string
+    {
+        if ($this->viewCount < 10) {
+            return 'cold'; // 冷门
+        } elseif ($this->viewCount < 50) {
+            return 'warm'; // 温热
+        } elseif ($this->viewCount < 200) {
+            return 'hot'; // 热门
+        } elseif ($this->viewCount < 1000) {
+            return 'very_hot'; // 很热
+        } else {
+            return 'explosive'; // 爆款
+        }
+    }
+
+    /**
+     * 获取阅读热度描述
+     */
+    public function getReadHeatDescription(): string
+    {
+        return match($this->getReadHeatLevel()) {
+            'cold' => '冷门',
+            'warm' => '温热',
+            'hot' => '热门',
+            'very_hot' => '很热',
+            'explosive' => '爆款',
+            default => '未知'
+        };
+    }
+
+    /**
+     * 检查是否为热门文章
+     */
+    public function isPopular(): bool
+    {
+        return $this->viewCount >= 50;
+    }
+
+    /**
+     * 检查是否为爆款文章
+     */
+    public function isExplosive(): bool
+    {
+        return $this->viewCount >= 1000;
     }
 }

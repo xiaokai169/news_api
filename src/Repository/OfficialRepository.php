@@ -135,4 +135,39 @@ class OfficialRepository extends ServiceEntityRepository
 
         return (int) $qb->getQuery()->getSingleScalarResult();
     }
+
+    /**
+     * 获取公共访问的公众号文章列表（只返回状态为1的文章）
+     */
+    public function findActivePublicArticles(?int $limit = null, ?int $offset = null): array
+    {
+        $qb = $this->createQueryBuilder('o')
+            ->leftJoin('o.category', 'category')
+            ->addSelect('category')
+            ->where('o.status = :activeStatus')
+            ->setParameter('activeStatus', 1)
+            ->orderBy('o.createAt', 'DESC');
+
+        if ($limit !== null) {
+            $qb->setMaxResults($limit);
+        }
+        if ($offset !== null) {
+            $qb->setFirstResult($offset);
+        }
+
+        return $qb->getQuery()->getResult();
+    }
+
+    /**
+     * 统计公共访问的公众号文章数量
+     */
+    public function countActivePublicArticles(): int
+    {
+        return (int) $this->createQueryBuilder('o')
+            ->select('COUNT(o.id)')
+            ->where('o.status = :activeStatus')
+            ->setParameter('activeStatus', 1)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
 }
