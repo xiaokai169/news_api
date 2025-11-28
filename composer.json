@@ -13,7 +13,7 @@
         "doctrine/doctrine-bundle": "^2.18.1",
         "doctrine/doctrine-migrations-bundle": "^3.6",
         "doctrine/orm": "^3.5.7",
-        "lexik/jwt-authentication-bundle": "^3.1",
+        "lexik/jwt-authentication-bundle": "^2.20",
         "nelmio/api-doc-bundle": "^5.8.1",
         "nelmio/cors-bundle": "^2.6",
         "phpdocumentor/reflection-docblock": "^5.6.3",
@@ -65,14 +65,26 @@
     },
     "scripts": {
         "auto-scripts": {
-            "cache:clear": "symfony-cmd",
-            "assets:install %PUBLIC_DIR%": "symfony-cmd"
+            "cache:clear": "php-script",
+            "assets:install %PUBLIC_DIR%": "php-script"
         },
         "post-install-cmd": [
             "@auto-scripts"
         ],
         "post-update-cmd": [
             "@auto-scripts"
+        ],
+        "production-install": [
+            "composer install --no-dev --optimize-autoloader --no-progress --no-interaction",
+            "@auto-scripts"
+        ],
+        "production-cache-clear": [
+            "php bin/console cache:clear --no-warmup --env=prod",
+            "php bin/console cache:warmup --env=prod"
+        ],
+        "check-environment": [
+            "php -v",
+            "php bin/console about --env=prod"
         ]
     },
     "conflict": {
