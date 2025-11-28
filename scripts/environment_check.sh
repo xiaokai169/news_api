@@ -29,6 +29,45 @@ log_debug() {
     echo -e "${BLUE}[DEBUG]${NC} $1"
 }
 
+# 检测宝塔面板环境
+check_baota_environment() {
+    log_info "=== 宝塔面板环境检查 ==="
+
+    local is_baota=false
+    local baota_php_versions=()
+
+    # 检查宝塔面板安装
+    if [ -d "/www/server/panel" ] || [ -f "/www/server/panel/class/panelPlugin.py" ]; then
+        is_baota=true
+        log_info "✓ 检测到宝塔面板环境"
+
+        # 检查宝塔面板中的 PHP 版本
+        if [ -d "/www/server/php" ]; then
+            for dir in /www/server/php/*/; do
+                if [ -d "$dir" ]; then
+                    version=$(basename "$dir")
+                    if [[ "$version" =~ ^[0-9]+\.[0-9]+$ ]]; then
+                        baota_php_versions+=("$version")
+                        log_info "  发现 PHP $version: $dir"
+                    fi
+                fi
+            done
+        fi
+
+        # 检查当前使用的 PHP 是否是宝塔版本
+        local php_path=$(which php 2>/dev/null)
+        if [[ "$php_path" == /www/server/php/* ]]; then
+            log_info "✓ 当前使用宝塔面板的 PHP"
+        else
+            log_warn "当前 PHP 不是宝塔面板版本，可能存在扩展不匹配问题"
+        fi
+    else
+        log_info "✗ 未检测到宝塔面板环境"
+    fi
+
+    echo "$is_baota"
+}
+
 # 检查 PHP 版本和配置
 check_php() {
     log_info "=== PHP 环境检查 ==="
@@ -50,32 +89,97 @@ check_php() {
         return 1
     fi
 
+    # 检查宝塔面板环境
+    local is_baota=$(check_baota_environment)
+    echo
+
     # 检查 PHP 配置
     memory_limit=$(php -r "echo ini_get('memory_limit');")
     max_execution_time=$(php -r "echo ini_get('max_execution_time');")
+    upload_max_filesize=$(php -r "echo ini_get('upload_max_filesize');")
+    post_max_size=$(php -r "echo ini_get('post_max_size');")
 
-    log_info "内存限制: $memory_limit"
-    log_info "最大执行时间: $max_execution_time 秒"
+    log_info "PHP 配置信息:"
+    log_info "  内存限制: $memory_limit"
+    log_info "  最大执行时间: $max_execution_time 秒"
+    log_info "  上传文件大小限制: $upload_max_filesize"
+    log_info "  POST 数据大小限制: $post_max_size"
+
+    # 检查 PHP 配置文件路径
+    local php_ini=$(php --ini | grep "Loaded Configuration File" | cut -d: -f2 | xargs)
+    if [ -n "$php_ini" ] && [ -f "$php_ini" ]; then
+        log_info "PHP 配置文件: $php_ini"
+    fi
 
     # 检查必要的扩展
     log_info "检查 PHP 扩展..."
     required_extensions=("ctype" "iconv" "pdo" "pdo_mysql" "json" "tokenizer" "mbstring" "curl" "xml")
     missing_extensions=()
+    extension_details=()
 
     for ext in "${required_extensions[@]}"; do
         if php -m | grep -q "^$ext$"; then
             log_debug "✓ $ext"
+            # 获取扩展版本信息（如果可用）
+            local ext_version=$(php -r "if (extension_loaded('$ext')) { echo phpversion('$ext'); }" 2>/dev/null || echo "unknown")
+            extension_details+=("$ext:$ext_version")
         else
             log_warn "✗ $ext (缺失)"
             missing_extensions+=("$ext")
         fi
     done
 
+    # 显示已安装扩展的详细信息
+    if [ ${#extension_details[@]} -gt 0 ]; then
+        log_info "已安装扩展详情:"
+        for detail in "${extension_details[@]}"; do
+            local ext_name=$(echo "$detail" | cut -d: -f1)
+            local ext_ver=$(echo "$detail" | cut -d: -f2)
+            log_info "  $ext_name: $ext_ver"
+        done
+    fi
+
     if [ ${#missing_extensions[@]} -gt 0 ]; then
         log_error "缺失的 PHP 扩展: ${missing_extensions[*]}"
-        log_info "安装命令示例:"
-        log_info "  Ubuntu/Debian: sudo apt-get install php8.2-${missing_extensions[*]}"
-        log_info "  CentOS/RHEL: sudo yum install php82-${missing_extensions[*]}"
+
+        # 检查是否有自动安装脚本
+        local install_script="$(dirname "$0")/install_php_extensions.sh"
+        if [ -f "$install_script" ]; then
+            log_info "发现自动安装脚本，尝试自动安装缺失的扩展..."
+
+            # 尝试自动安装
+            if bash "$install_script" --auto; then
+                log_info "自动安装成功，重新检查扩展..."
+                missing_extensions=()
+                for ext in "${required_extensions[@]}"; do
+                    if ! php -m | grep -q "^$ext$"; then
+                        missing_extensions+=("$ext")
+                    fi
+                done
+
+                if [ ${#missing_extensions[@]} -gt 0 ]; then
+                    log_error "自动安装后仍有缺失的扩展: ${missing_extensions[*]}"
+                    log_info "手动安装命令:"
+                    log_info "  bash $install_script ${missing_extensions[*]}"
+                    return 1
+                else
+                    log_info "所有扩展已成功安装！"
+                    return 0
+                fi
+            else
+                log_error "自动安装失败"
+                log_info "手动安装命令:"
+                log_info "  bash $install_script ${missing_extensions[*]}"
+                return 1
+            fi
+        else
+            log_info "安装命令示例:"
+            log_info "  Ubuntu/Debian: sudo apt-get install php8.2-${missing_extensions[*]}"
+            log_info "  CentOS/RHEL: sudo yum install php82-${missing_extensions[*]}"
+            log_info "  或使用自动安装脚本:"
+            log_info "  bash scripts/install_php_extensions.sh ${missing_extensions[*]}"
+        fi
+
         return 1
     fi
 
@@ -247,6 +351,38 @@ generate_fix_suggestions() {
     log_info "=== 修复建议 ==="
 
     suggestions=()
+    extension_suggestions=()
+
+    # 检查 PHP 扩展问题
+    required_extensions=("ctype" "iconv" "pdo" "pdo_mysql" "json" "tokenizer" "mbstring" "curl" "xml")
+    missing_extensions=()
+
+    for ext in "${required_extensions[@]}"; do
+        if ! php -m | grep -q "^$ext$"; then
+            missing_extensions+=("$ext")
+        fi
+    done
+
+    if [ ${#missing_extensions[@]} -gt 0 ]; then
+        local install_script="$(dirname "$0")/install_php_extensions.sh"
+        if [ -f "$install_script" ]; then
+            extension_suggestions+=("bash $install_script --auto  # 自动安装所有必需扩展")
+            extension_suggestions+=("bash $install_script ${missing_extensions[*]}  # 手动安装特定扩展")
+        fi
+
+        # 检查是否为宝塔面板环境
+        if [ -d "/www/server/panel" ]; then
+            extension_suggestions+=("# 宝塔面板环境:")
+            extension_suggestions+=("1. 登录宝塔面板")
+            extension_suggestions+=("2. 进入软件商店 -> PHP -> 设置 -> 安装扩展")
+            extension_suggestions+=("3. 勾选缺失的扩展: ${missing_extensions[*]}")
+        else
+            local php_version=$(php -r "echo PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION;")
+            extension_suggestions+=("# 手动安装命令:")
+            extension_suggestions+=("Ubuntu/Debian: sudo apt-get install php$php_version-${missing_extensions[*]}")
+            extension_suggestions+=("CentOS/RHEL: sudo yum install php$php_version-${missing_extensions[*]}")
+        fi
+    fi
 
     # 检查常见问题
     if [ ! -x "bin/console" ]; then
@@ -275,12 +411,22 @@ generate_fix_suggestions() {
         suggestions+=("export COMPOSER_ALLOW_SUPERUSER=1")
     fi
 
+    # 显示扩展安装建议
+    if [ ${#extension_suggestions[@]} -gt 0 ]; then
+        log_info "PHP 扩展安装建议:"
+        for suggestion in "${extension_suggestions[@]}"; do
+            log_info "  $suggestion"
+        done
+        echo
+    fi
+
+    # 显示其他修复建议
     if [ ${#suggestions[@]} -gt 0 ]; then
-        log_info "建议执行的修复命令:"
+        log_info "其他修复建议:"
         for suggestion in "${suggestions[@]}"; do
             log_info "  $suggestion"
         done
-    else
+    elif [ ${#extension_suggestions[@]} -eq 0 ]; then
         log_info "未发现需要修复的问题"
     fi
 }
@@ -309,6 +455,19 @@ main() {
     echo
     check_environment || exit_code=1
     echo
+
+    # 显示快速修复选项
+    log_info "=== 快速修复选项 ==="
+    log_info "如果发现 PHP 扩展缺失，可以运行以下命令快速修复:"
+    local install_script="$(dirname "$0")/install_php_extensions.sh"
+    if [ -f "$install_script" ]; then
+        log_info "  bash $install_script --auto"
+        log_info "  bash $install_script --check"
+    else
+        log_info "  # 安装脚本不存在，请手动安装扩展"
+    fi
+    echo
+
     generate_fix_suggestions
 
     echo
