@@ -11,7 +11,37 @@ nelmio_cors:
         forced_allow_origin_value: null
         skip_same_as_origin: true
     paths:
-        '^/api/': ~
-        '^/official-api/': ~
-        '^/public-api/': ~
+        '^/api/':
+            origin_regex: false
+            allow_origin: ['%env(CORS_ALLOW_ORIGIN)%']
+            allow_methods: ['GET', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE']
+            allow_headers: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'x-request-id', 'X-Request-Id', 'X-Request-ID']
+            expose_headers: ['Link', 'X-Pagination']
+            max_age: 3600
+            hosts: []
+            allow_credentials: false
+            forced_allow_origin_value: null
+            skip_same_as_origin: true
+        '^/official-api/':
+            origin_regex: false
+            allow_origin: ['%env(CORS_ALLOW_ORIGIN)%']
+            allow_methods: ['GET', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE']
+            allow_headers: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'x-request-id', 'X-Request-Id', 'X-Request-ID']
+            expose_headers: ['Link', 'X-Pagination']
+            max_age: 3600
+            hosts: []
+            allow_credentials: false
+            forced_allow_origin_value: null
+            skip_same_as_origin: true
+        '^/public-api/':
+            origin_regex: false
+            allow_origin: ['%env(CORS_ALLOW_ORIGIN)%']
+            allow_methods: ['GET', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE']
+            allow_headers: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'x-request-id', 'X-Request-Id', 'X-Request-ID']
+            expose_headers: ['Link', 'X-Pagination']
+            max_age: 3600
+            hosts: []
+            allow_credentials: false
+            forced_allow_origin_value: null
+            skip_same_as_origin: true
 
