@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>前端 CORS 跨域测试</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fafafa;
+        }
+
+        .test-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+
+        .test-button:hover {
+            background-color: #0056b3;
+        }
+
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+
+        .warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-success {
+            background-color: #28a745;
+        }
+
+        .status-error {
+            background-color: #dc3545;
+        }
+
+        .status-warning {
+            background-color: #ffc107;
+        }
+
+        .status-info {
+            background-color: #17a2b8;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🌐 前端 CORS 跨域测试工具</h1>
+
+        <div class="test-section">
+            <h3>📋 当前页面信息</h3>
+            <div id="page-info" class="result info">
+                正在获取页面信息...
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🧪 同源测试（应该成功）</h3>
+            <button class="test-button" onclick="testSameOrigin()">测试同源 API 调用</button>
+            <div id="same-origin-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🌍 跨域测试 - 当前域名</h3>
+            <button class="test-button" onclick="testCrossOriginCurrent()">测试当前域名跨域</button>
+            <div id="cross-origin-current-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🌍 跨域测试 - ops.arab-bee.com</h3>
+            <button class="test-button" onclick="testCrossOriginOps()">测试 ops.arab-bee.com 跨域</button>
+            <div id="cross-origin-ops-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔍 OPTIONS 预检测试</h3>
+            <button class="test-button" onclick="testOptionsPreflight()">测试 OPTIONS 预检请求</button>
+            <div id="options-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>📡 实际业务 API 测试</h3>
+            <button class="test-button" onclick="testBusinessAPI()">测试 /official-api/news</button>
+            <div id="business-api-result"></div>
+        </div>
+    </div>
+
+    <script>
+        // 显示页面信息
+        function showPageInfo() {
+            const pageInfo = {
+                url: window.location.href,
+                origin: window.location.origin,
+                hostname: window.location.hostname,
+                port: window.location.port,
+                protocol: window.location.protocol,
+                userAgent: navigator.userAgent,
+                timestamp: new Date().toISOString()
+            };
+
+            document.getElementById('page-info').innerHTML = `
+                <span class="status-indicator status-info"></span>
+                <strong>页面信息:</strong><br>
+                URL: ${pageInfo.url}<br>
+                Origin: ${pageInfo.origin}<br>
+                Hostname: ${pageInfo.hostname}<br>
+                Port: ${pageInfo.port}<br>
+                Protocol: ${pageInfo.protocol}<br>
+                User Agent: ${pageInfo.userAgent}<br>
+                Timestamp: ${pageInfo.timestamp}
+            `;
+        }
+
+        // 显示结果函数
+        function showResult(elementId, data, type = 'info', status = 'success') {
+            const element = document.getElementById(elementId);
+            const statusClass = `status-${status}`;
+            const resultClass = type;
+
+            let statusIndicator = '';
+            if (status === 'success') statusIndicator = '<span class="status-indicator status-success"></span>';
+            else if (status === 'error') statusIndicator = '<span class="status-indicator status-error"></span>';
+            else if (status === 'warning') statusIndicator = '<span class="status-indicator status-warning"></span>';
+            else statusIndicator = '<span class="status-indicator status-info"></span>';
+
+            element.innerHTML = `
+                <div class="result ${resultClass}">
+                    ${statusIndicator}
+                    <strong>测试时间:</strong> ${new Date().toLocaleString()}<br><br>
+                    ${typeof data === 'object' ? JSON.stringify(data, null, 2) : data}
+                </div>
+            `;
+        }
+
+        // 同源测试
+        async function testSameOrigin() {
+            try {
+                const response = await fetch('/official-api/news', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                });
+
+                const data = await response.text();
+
+                showResult('same-origin-result', {
+                    success: true,
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers: Object.fromEntries(response.headers.entries()),
+                    responsePreview: data.substring(0, 500) + (data.length > 500 ? '...' : ''),
+                    note: '同源请求，应该成功'
+                }, 'success', 'success');
+
+            } catch (error) {
+                showResult('same-origin-result', {
+                    success: false,
+                    error: error.message,
+                    stack: error.stack,
+                    note: '同源请求失败，可能是网络问题'
+                }, 'error', 'error');
+            }
+        }
+
+        // 跨域测试 - 当前域名
+        async function testCrossOriginCurrent() {
+            try {
+                const currentOrigin = window.location.origin;
+                const response = await fetch(currentOrigin + '/official-api/news', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'Origin': currentOrigin
+                    },
+                    mode: 'cors'
+                });
+
+                const data = await response.text();
+
+                showResult('cross-origin-current-result', {
+                    success: true,
+                    origin: currentOrigin,
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers: Object.fromEntries(response.headers.entries()),
+                    responsePreview: data.substring(0, 500) + (data.length > 500 ? '...' : ''),
+                    note: '当前域名跨域测试'
+                }, 'success', 'success');
+
+            } catch (error) {
+                showResult('cross-origin-current-result', {
+                    success: false,
+                    error: error.message,
+                    stack: error.stack,
+                    note: '当前域名跨域失败'
+                }, 'error', 'error');
+            }
+        }
+
+        // 跨域测试 - ops.arab-bee.com
+        async function testCrossOriginOps() {
+            try {
+                const opsOrigin = 'https://ops.arab-bee.com';
+                const response = await fetch('https://newsapi.arab-bee.com/official-api/news', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'Origin': opsOrigin,
+                        'Referer': opsOrigin
+                    },
+                    mode: 'cors',
+                    credentials: 'omit'
+                });
+
+                const data = await response.text();
+
+                showResult('cross-origin-ops-result', {
+                    success: true,
+                    requestOrigin: opsOrigin,
+                    actualOrigin: window.location.origin,
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers: Object.fromEntries(response.headers.entries()),
+                    responsePreview: data.substring(0, 500) + (data.length > 500 ? '...' : ''),
+                    note: 'ops.arab-bee.com 跨域测试 - 这是您遇到问题的关键测试'
+                }, 'success', 'success');
+
+            } catch (error) {
+                showResult('cross-origin-ops-result', {
+                    success: false,
+                    error: error.message,
+                    stack: error.stack,
+                    note: 'ops.arab-bee.com 跨域失败 - 这就是您遇到的问题！',
+                    troubleshooting: '请检查浏览器的 Network 面板，查看具体是哪个请求失败了'
+                }, 'error', 'error');
+            }
+        }
+
+        // OPTIONS 预检测试
+        async function testOptionsPreflight() {
+            try {
+                const response = await fetch('/official-api/news', {
+                    method: 'OPTIONS',
+                    headers: {
+                        'Origin': window.location.origin,
+                        'Access-Control-Request-Method': 'GET',
+                        'Access-Control-Request-Headers': 'Content-Type, Authorization'
+                    },
+                    mode: 'cors'
+                });
+
+                showResult('options-result', {
+                    success: true,
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers: Object.fromEntries(response.headers.entries()),
+                    note: 'OPTIONS 预检请求测试'
+                }, 'success', 'success');
+
+            } catch (error) {
+                showResult('options-result', {
+                    success: false,
+                    error: error.message,
+                    stack: error.stack,
+                    note: 'OPTIONS 预检请求失败'
+                }, 'error', 'error');
+            }
+        }
+
+        // 业务 API 测试
+        async function testBusinessAPI() {
+            try {
+                const response = await fetch('/official-api/news', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'Authorization': 'Bearer test-token'
+                    },
+                    mode: 'cors'
+                });
+
+                const data = await response.text();
+
+                showResult('business-api-result', {
+                    success: true,
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers: Object.fromEntries(response.headers.entries()),
+                    responsePreview: data.substring(0, 500) + (data.length > 500 ? '...' : ''),
+                    note: '实际业务 API 测试，包含 Authorization 头'
+                }, 'success', 'success');
+
+            } catch (error) {
+                showResult('business-api-result', {
+                    success: false,
+                    error: error.message,
+                    stack: error.stack,
+                    note: '业务 API 调用失败'
+                }, 'error', 'error');
+            }
+        }
+
+        // 页面加载时显示信息
+        window.onload = function () {
+            showPageInfo();
+        };
+    </script>
+</body>
+
+</html>
