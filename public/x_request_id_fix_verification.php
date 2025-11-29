@@ -1,4 +1,3 @@
-
 <?php
 /**
  * X-Request-Id头部修复验证脚本
@@ -229,3 +228,39 @@ function generateDiagnosis($results) {
 
     // 检查OPTIONS测试结果
     $failedTests = [];
+    foreach ($results['options_test'] as $testName => $testResult) {
+        if (!$testResult['success'] || !$testResult['has_x_request_id']) {
+            $failedTests[] = $testName;
+        }
+    }
+
+    if (!empty($failedTests)) {
+        $diagnosis['issues_found'][] = "以下OPTIONS测试失败: " . implode(', ', $failedTests);
+        $diagnosis['overall_status'] = 'warning';
+    }
+
+    // 记录已应用的修复
+    $diagnosis['fixes_applied'] = [
+        'nelmio_cors_yaml' => '已添加X-Request-Id、x-request-id、X-Request-ID到allow_headers',
+        'production_subscriber' => '已添加X-Request-Id相关头部到Access-Control-Allow-Headers'
+    ];
+
+    // 生成建议
+    if ($diagnosis['overall_status'] === 'success') {
+        $diagnosis['recommendations'][] = '✅ X-Request-Id头部配置修复成功';
+        $diagnosis['recommendations'][] = '✅ 所有CORS配置已正确设置';
+        $diagnosis['recommendations'][] = '建议清理缓存并重启服务';
+    } else {
+        $diagnosis['recommendations'][] = '检查Web服务器缓存';
+        $diagnosis['recommendations'][] = '确认Symfony缓存已清理';
+        $diagnosis['recommendations'][] = '检查是否有其他CORS配置覆盖';
+    }
+
+    return $diagnosis;
+}
+
+// 执行验证
+$verificationResults = verifyXRequestIdFix();
+
+// 输出结果
+echo json_encode($verificationResults, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
