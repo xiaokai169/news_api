@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>浏览器 CORS 调试工具</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fafafa;
+        }
+
+        .test-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+
+        .test-button:hover {
+            background-color: #0056b3;
+        }
+
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+
+        .warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-success {
+            background-color: #28a745;
+        }
+
+        .status-error {
+            background-color: #dc3545;
+        }
+
+        .status-warning {
+            background-color: #ffc107;
+        }
+
+        .status-info {
+            background-color: #17a2b8;
+        }
+
+        .clear-cache {
+            background-color: #6c757d;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🔍 浏览器 CORS 跨域调试工具</h1>
+
+        <div class="test-section">
+            <h3>🧹 清除缓存</h3>
+            <button class="clear-cache" onclick="clearBrowserCache()">清除浏览器缓存并硬刷新</button>
+            <p><small>如果 CORS 头已正确设置但浏览器仍报错，通常是缓存问题</small></p>
+        </div>
+
+        <div class="test-section">
+            <h3>📋 当前环境信息</h3>
+            <div id="env-info" class="result info">
+                正在获取环境信息...
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🌐 测试 ops.arab-bee.com 跨域</h3>
+            <button class="test-button" onclick="testOpsCrossOrigin()">测试 ops.arab-bee.com 跨域请求</button>
+            <div id="ops-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔍 Network 请求分析</h3>
+            <button class="test-button" onclick="analyzeNetworkRequest()">分析 Network 请求</button>
+            <div id="network-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>📡 实际 API 测试</h3>
+            <button class="test-button" onclick="testRealAPI()">测试实际 API 调用</button>
+            <div id="api-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔧 调试信息</h3>
+            <div id="debug-info" class="result info">
+                等待测试结果...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 显示环境信息
+        function showEnvironmentInfo() {
+            const envInfo = {
+                url: window.location.href,
+                origin: window.location.origin,
+                hostname: window.location.hostname,
+                protocol: window.location.protocol,
+                port: window.location.port,
+                userAgent: navigator.userAgent,
+                timestamp: new Date().toISOString(),
+                cookieEnabled: navigator.cookieEnabled,
+                onLine: navigator.onLine,
+                languages: navigator.languages,
+                platform: navigator.platform
+            };
+
+            document.getElementById('env-info').innerHTML = `
+                <span class="status-indicator status-info"></span>
+                <strong>环境信息:</strong><br>
+                URL: ${envInfo.url}<br>
+                Origin: ${envInfo.origin}<br>
+                Hostname: ${envInfo.hostname}<br>
+                Protocol: ${envInfo.protocol}<br>
+                Port: ${envInfo.port}<br>
+                User Agent: ${envInfo.userAgent}<br>
+                Cookie Enabled: ${envInfo.cookieEnabled}<br>
+                Online: ${envInfo.onLine}<br>
+                Languages: ${envInfo.languages.join(', ')}<br>
+                Platform: ${envInfo.platform}<br>
+                Timestamp: ${envInfo.timestamp}
+            `;
+        }
+
+        // 显示结果函数
+        function showResult(elementId, data, type = 'info', status = 'info') {
+            const element = document.getElementById(elementId);
+            const statusClass = `status-${status}`;
+            const resultClass = type;
+
+            let statusIndicator = '';
+            if (status === 'success') statusIndicator = '<span class="status-indicator status-success"></span>';
+            else if (status === 'error') statusIndicator = '<span class="status-indicator status-error"></span>';
+            else if (status === 'warning') statusIndicator = '<span class="status-indicator status-warning"></span>';
+            else statusIndicator = '<span class="status-indicator status-info"></span>';
+
+            element.innerHTML = `
+                <div class="result ${resultClass}">
+                    ${statusIndicator}
+                    <strong>测试时间:</strong> ${new Date().toLocaleString()}<br><br>
+                    ${typeof data === 'object' ? JSON.stringify(data, null, 2) : data}
+                </div>
+            `;
+        }
+
+        // 清除浏览器缓存
+        function clearBrowserCache() {
+            // 清除 localStorage
+            localStorage.clear();
+            sessionStorage.clear();
+
+            // 强制刷新
+            window.location.reload(true);
+        }
+
+        // 测试 ops.arab-bee.com 跨域
+        async function testOpsCrossOrigin() {
+            const startTime = Date.now();
+
+            try {
+                const response = await fetch('https://newsapi.arab-bee.com/official-api/news', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'Origin': 'https://ops.arab-bee.com',
+                        'Referer': 'https://ops.arab-bee.com'
+                    },
+                    mode: 'cors',
+                    credentials: 'omit',
+                    cache: 'no-cache'
+                });
+
+                const endTime = Date.now();
+                const responseText = await response.text();
+
+                const result = {
+                    success: true,
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers: Object.fromEntries(response.headers.entries()),
+                    responseTime: endTime - startTime,
+                    responsePreview: responseText.substring(0, 500) + (responseText.length > 500 ? '...' : ''),
+                    url: 'https://newsapi.arab-bee.com/official-api/news',
+                    requestOrigin: 'https://ops.arab-bee.com',
+                    actualOrigin: window.location.origin,
+                    note: '这是关键的跨域测试'
+                };
+
+                showResult('ops-result', result, 'success', 'success');
+                updateDebugInfo('跨域测试成功', result);
+
+            } catch (error) {
+                const endTime = Date.now();
+
+                const result = {
+                    success: false,
+                    error: error.message,
+                    name: error.name,
+                    stack: error.stack,
+                    responseTime: endTime - startTime,
+                    url: 'https://newsapi.arab-bee.com/official-api/news',
+                    requestOrigin: 'https://ops.arab-bee.com',
+                    actualOrigin: window.location.origin,
+                    note: '跨域测试失败 - 这就是您遇到的问题！',
+                    troubleshooting: '请检查浏览器控制台的详细错误信息'
+                };
+
+                showResult('ops-result', result, 'error', 'error');
+                updateDebugInfo('跨域测试失败', result);
+            }
+        }
+
+        // 分析 Network 请求
+        async function analyzeNetworkRequest() {
+            const startTime = Date.now();
+
+            try {
+                // 创建一个简单的请求来分析
+                const response = await fetch('https://newsapi.arab-bee.com/official-api/news', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    mode: 'cors'
+                });
+
+                const endTime = Date.now();
+
+                const analysis = {
+                    success: true,
+                    requestUrl: 'https://newsapi.arab-bee.com/official-api/news',
+                    requestMethod: 'GET',
+                    responseStatus: response.status,
+                    responseHeaders: Object.fromEntries(response.headers.entries()),
+                    responseTime: endTime - startTime,
+                    corsHeaders: {
+                        'Access-Control-Allow-Origin': response.headers.get('Access-Control-Allow-Origin'),
+                        'Access-Control-Allow-Methods': response.headers.get('Access-Control-Allow-Methods'),
+                        'Access-Control-Allow-Headers': response.headers.get('Access-Control-Allow-Headers'),
+                        'Access-Control-Max-Age': response.headers.get('Access-Control-Max-Age')
+                    },
+                    note: '分析请求和响应的详细信息'
+                };
+
+                showResult('network-result', analysis, 'success', 'success');
+                updateDebugInfo('Network 分析完成', analysis);
+
+            } catch (error) {
+                const analysis = {
+                    success: false,
+                    error: error.message,
+                    name: error.name,
+                    note: 'Network 请求分析失败'
+                };
+
+                showResult('network-result', analysis, 'error', 'error');
+                updateDebugInfo('Network 分析失败', analysis);
+            }
+        }
+
+        // 测试实际 API
+        async function testRealAPI() {
+            try {
+                const response = await fetch('/official-api/news', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                const result = {
+                    success: true,
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers: Object.fromEntries(response.headers.entries()),
+                    data: data,
+                    note: '实际 API 调用测试'
+                };
+
+                showResult('api-result', result, 'success', 'success');
+                updateDebugInfo('API 测试成功', result);
+
+            } catch (error) {
+                const result = {
+                    success: false,
+                    error: error.message,
+                    name: error.name,
+                    note: 'API 调用失败'
+                };
+
+                showResult('api-result', result, 'error', 'error');
+                updateDebugInfo('API 测试失败', result);
+            }
+        }
+
+        // 更新调试信息
+        function updateDebugInfo(title, data) {
+            const debugInfo = {
+                title: title,
+                timestamp: new Date().toLocaleString(),
+                data: data,
+                browserInfo: {
+                    userAgent: navigator.userAgent,
+                    language: navigator.language,
+                    platform: navigator.platform,
+                    cookieEnabled: navigator.cookieEnabled
+                }
+            };
+
+            document.getElementById('debug-info').innerHTML = `
+                <span class="status-indicator status-info"></span>
+                <strong>${title}</strong><br><br>
+                ${JSON.stringify(debugInfo, null, 2)}
+            `;
+        }
+
+        // 页面加载时初始化
+        window.onload = function () {
+            showEnvironmentInfo();
+            updateDebugInfo('页面加载完成', { message: '准备进行 CORS 测试' });
+        };
+    </script>
+</body>
+
+</html>
