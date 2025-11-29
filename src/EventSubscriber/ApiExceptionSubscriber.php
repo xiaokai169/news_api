@@ -29,9 +29,11 @@ class ApiExceptionSubscriber implements EventSubscriberInterface
         $request = $event->getRequest();
         $exception = $event->getThrowable();
 
-        // 🔍 判断是否为 API 请求（处理 /api 和 /official-api 路径）
+        // 🔍 判断是否为 API 请求（处理 /api、/official-api 和 /public-api 路径）
         $path = $request->getPathInfo();
-        $isApiRequest = str_starts_with($path, '/api') || str_starts_with($path, '/official-api');
+        $isApiRequest = str_starts_with($path, '/api') ||
+                        str_starts_with($path, '/official-api') ||
+                        str_starts_with($path, '/public-api');
 
         // 如果不是 API 请求，不处理，交给 Symfony 默认异常处理（比如返回 HTML 500 页面）
         if (!$isApiRequest) {

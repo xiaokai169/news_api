@@ -9,5 +9,11 @@ RewriteRule ^ - [L]
 RewriteRule ^api/(health|info|test)$ api_router.php [L]
 RewriteRule ^official-api/news api_router.php [L]
 
+# API 404错误处理 - 对于API路径的无效请求，返回JSON格式的404
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} ^/(api|official-api|public-api) [NC]
+RewriteRule ^(.*)$ api_404_handler.php [L]
+
 # 默认路由到 index.php
 RewriteRule ^(.*)$ index.php [QSA,L]
