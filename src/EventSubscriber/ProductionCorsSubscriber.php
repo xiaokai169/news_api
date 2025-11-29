@@ -85,8 +85,15 @@ class ProductionCorsSubscriber implements EventSubscriberInterface
 
     private function getAllowedOrigin($requestOrigin): string
     {
-        // 从环境变量获取允许的域名
-        $corsAllowOrigin = $_ENV['CORS_ALLOW_ORIGIN'] ?? '*';
+        // 🔧 处理环境变量缺失问题
+        $corsAllowOrigin = $_ENV['CORS_ALLOW_ORIGIN'] ?? getenv('CORS_ALLOW_ORIGIN') ?? '*';
+
+        // 如果环境变量未设置，强制设置为 *
+        if (empty($corsAllowOrigin) || $corsAllowOrigin === 'not_set') {
+            $corsAllowOrigin = '*';
+            // 记录到系统日志
+            error_log('[PROD CORS] CORS_ALLOW_ORIGIN not set, using "*" as fallback');
+        }
 
         if ($corsAllowOrigin === '*') {
             return '*';
