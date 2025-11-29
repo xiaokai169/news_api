@@ -22,15 +22,20 @@ services:
         arguments:
             $entityManager: '@doctrine.orm.default_entity_manager'
 
-    # 🔧 强制 CORS 处理订阅者 - 宝塔环境专用
-    App\EventSubscriber\ForceCorsSubscriber:
+    # 🔧 生产环境 CORS 订阅者 - 避免权限问题
+    App\EventSubscriber\ProductionCorsSubscriber:
         tags:
             - { name: kernel.event_subscriber }
 
-    # CORS 调试订阅者 - 生产环境可以临时禁用
-    App\EventSubscriber\CorsDebugSubscriber:
-        tags:
-            - { name: kernel.event_subscriber }
+    # 🔧 强制 CORS 处理订阅者 - 宝塔环境专用（备用）
+    # App\EventSubscriber\ForceCorsSubscriber:
+    #     tags:
+    #         - { name: kernel.event_subscriber }
+
+    # CORS 调试订阅者 - 临时禁用避免权限问题
+    # App\EventSubscriber\CorsDebugSubscriber:
+    #     tags:
+    #         - { name: kernel.event_subscriber }
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

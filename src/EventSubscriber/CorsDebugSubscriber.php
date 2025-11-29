@@ -184,11 +184,18 @@ class CorsDebugSubscriber implements EventSubscriberInterface
         $logMessage = '[CORS DEBUG] ' . json_encode($logData, JSON_UNESCAPED_UNICODE);
         error_log($logMessage);
 
-        // 如果是调试模式，也写入到文件
+        // 如果是调试模式，也写入到文件（处理权限问题）
         if ($_ENV['APP_DEBUG'] ?? false) {
             $logFile = __DIR__ . '/../../public/cors_debug.log';
             $logEntry = date('Y-m-d H:i:s') . ' - ' . $logMessage . PHP_EOL . PHP_EOL;
-            file_put_contents($logFile, $logEntry, FILE_APPEND | LOCK_EX);
+
+            // 🔧 处理文件写入权限问题
+            try {
+                @file_put_contents($logFile, $logEntry, FILE_APPEND | LOCK_EX);
+            } catch (\Exception $e) {
+                // 如果写入失败，只记录到错误日志，不影响应用运行
+                error_log('[CORS DEBUG] Failed to write to debug file: ' . $e->getMessage());
+            }
         }
 
         // 清空当前请求的调试日志
