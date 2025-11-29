@@ -20,7 +20,7 @@ nelmio_api_doc:
         servers:
             - url: http://localhost:8000
               description: 本地开发服务器
-            - url: https://api.yourdomain.com
+            - url: https://newsapi.arab-bee.com
               description: 生产环境服务器
         components:
             securitySchemes:
