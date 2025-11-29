@@ -73,7 +73,7 @@ class ProductionCorsSubscriber implements EventSubscriberInterface
         // 设置 CORS 头
         $response->headers->set('Access-Control-Allow-Origin', $allowedOrigin);
         $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-        $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-Custom-Header');
+        $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-Custom-Header, X-Request-Id, x-request-id, X-Request-ID');
         $response->headers->set('Access-Control-Max-Age', '3600');
         $response->headers->set('Access-Control-Allow-Credentials', 'false');
 
