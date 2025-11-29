@@ -1,11 +1,17 @@
 nelmio_cors:
     defaults:
-        origin_regex: true
-        allow_origin: ['*']  # 全局设置
-        allow_methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
-        allow_headers: ['*']  # 允许所有头
+        origin_regex: false  # 改为false避免正则匹配问题
+        allow_origin: ['%env(CORS_ALLOW_ORIGIN)%']  # 使用环境变量
+        allow_methods: ['GET', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE']
+        allow_headers: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
         expose_headers: ['Link', 'X-Pagination']
         max_age: 3600
         hosts: []
         allow_credentials: false
+        forced_allow_origin_value: null
+        skip_same_as_origin: true
+    paths:
+        '^/api/': ~
+        '^/official-api/': ~
+        '^/public-api/': ~
 

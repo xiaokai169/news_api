@@ -31,6 +31,13 @@ class CorsDebugSubscriber implements EventSubscriberInterface
         $path = $request->getPathInfo();
         $method = $request->getMethod();
 
+        // 🔍 添加环境变量调试日志
+        if ($method === 'OPTIONS') {
+            error_log('[CORS DEBUG] ENVIRONMENT CHECK - APP_ENV: ' . ($_ENV['APP_ENV'] ?? 'not_set') .
+                     ', APP_DEBUG: ' . ($_ENV['APP_DEBUG'] ?? 'not_set') .
+                     ', CORS_ALLOW_ORIGIN: ' . ($_ENV['CORS_ALLOW_ORIGIN'] ?? 'not_set'));
+        }
+
         // 只记录API请求的调试信息
         $isApiRequest = str_starts_with($path, '/api') ||
                         str_starts_with($path, '/official-api') ||
@@ -58,6 +65,11 @@ class CorsDebugSubscriber implements EventSubscriberInterface
 
         // 特殊处理OPTIONS请求
         if ($method === 'OPTIONS') {
+            error_log('[CORS DEBUG] OPTIONS REQUEST DETECTED - Path: ' . $path .
+                     ', Origin: ' . ($request->headers->get('Origin') ?? 'none') .
+                     ', Request-Method: ' . ($request->headers->get('Access-Control-Request-Method') ?? 'none') .
+                     ', Request-Headers: ' . ($request->headers->get('Access-Control-Request-Headers') ?? 'none'));
+
             $this->debugLog[] = [
                 'timestamp' => microtime(true),
                 'event' => 'OPTIONS_DETECTED',
@@ -76,6 +88,18 @@ class CorsDebugSubscriber implements EventSubscriberInterface
         $request = $event->getRequest();
         $response = $event->getResponse();
         $path = $request->getPathInfo();
+
+        // 🔍 添加CORS头调试日志
+        if (str_starts_with($path, '/api') ||
+            str_starts_with($path, '/official-api') ||
+            str_starts_with($path, '/public-api')) {
+
+            error_log('[CORS DEBUG] RESPONSE HEADERS - Path: ' . $path .
+                     ', Status: ' . $response->getStatusCode() .
+                     ', Allow-Origin: ' . ($response->headers->get('Access-Control-Allow-Origin') ?? 'none') .
+                     ', Allow-Methods: ' . ($response->headers->get('Access-Control-Allow-Methods') ?? 'none') .
+                     ', Allow-Headers: ' . ($response->headers->get('Access-Control-Allow-Headers') ?? 'none'));
+        }
 
         // 只记录API请求的调试信息
         $isApiRequest = str_starts_with($path, '/api') ||
