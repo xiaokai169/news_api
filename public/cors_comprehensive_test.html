@@ -4,10 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CORS 综合测试 - 诊断网络请求问题</title>
+    <title>CORS综合测试工具</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
@@ -16,45 +16,52 @@
 
         .container {
             background: white;
-            padding: 20px;
             border-radius: 8px;
+            padding: 30px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
         }
 
         .test-section {
             margin-bottom: 30px;
-            padding: 15px;
+            padding: 20px;
             border: 1px solid #ddd;
             border-radius: 5px;
+            background-color: #fafafa;
         }
 
-        .test-section h3 {
-            margin-top: 0;
-            color: #333;
-        }
-
-        button {
+        .test-button {
             background-color: #007bff;
             color: white;
             border: none;
             padding: 10px 20px;
-            border-radius: 4px;
+            border-radius: 5px;
             cursor: pointer;
             margin: 5px;
+            font-size: 14px;
         }
 
-        button:hover {
+        .test-button:hover {
             background-color: #0056b3;
+        }
+
+        .test-button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
         }
 
         .result {
             margin-top: 15px;
-            padding: 10px;
-            border-radius: 4px;
-            white-space: pre-wrap;
-            font-family: monospace;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
             font-size: 12px;
+            white-space: pre-wrap;
             max-height: 300px;
             overflow-y: auto;
         }
@@ -71,25 +78,25 @@
             color: #721c24;
         }
 
-        .info {
-            background-color: #d1ecf1;
-            border: 1px solid #bee5eb;
-            color: #0c5460;
-        }
-
         .warning {
             background-color: #fff3cd;
             border: 1px solid #ffeaa7;
             color: #856404;
         }
 
-        .url-display {
-            background-color: #f8f9fa;
+        .info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+
+        .config-input {
+            width: 100%;
             padding: 10px;
-            border-radius: 4px;
             margin: 10px 0;
-            font-family: monospace;
-            word-break: break-all;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
         }
 
         .status-indicator {
@@ -108,338 +115,586 @@
             background-color: #dc3545;
         }
 
-        .status-pending {
+        .status-warning {
             background-color: #ffc107;
+        }
+
+        .status-info {
+            background-color: #17a2b8;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab.active {
+            border-bottom-color: #007bff;
+            color: #007bff;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: #007bff;
+            transition: width 0.3s ease;
         }
     </style>
 </head>
 
 <body>
     <div class="container">
-        <h1>CORS 综合测试 - 诊断网络请求问题</h1>
+        <h1>🔍 CORS综合测试工具</h1>
 
-        <div class="info">
-            <strong>当前页面信息:</strong><br>
-            <span id="currentPageInfo"></span>
-        </div>
-    </div>
-
-    <div class="container">
+        <!-- 配置区域 -->
         <div class="test-section">
-            <h3>测试1: URL格式问题诊断</h3>
-            <p>测试不同URL格式，找出 "URL scheme must be http or https" 错误的原因</p>
+            <h3>⚙️ 测试配置</h3>
+            <label for="baseUrl">API基础URL:</label>
+            <input type="text" id="baseUrl" class="config-input" value="https://newsapi.arab-bee.com"
+                placeholder="输入API基础URL">
 
-            <div class="url-display">
-                <strong>相对路径:</strong> <span id="relativePath"></span><br>
-                <strong>协议相对:</strong> <span id="protocolRelative"></span><br>
-                <strong>HTTP完整:</strong> <span id="httpFull"></span><br>
-                <strong>HTTPS完整:</strong> <span id="httpsFull"></span>
+            <label for="testOrigin">测试Origin:</label>
+            <input type="text" id="testOrigin" class="config-input" value="https://ops.arab-bee.com"
+                placeholder="输入测试的Origin">
+
+            <button class="test-button" onclick="runAllTests()">🚀 运行所有测试</button>
+            <button class="test-button" onclick="clearResults()">🗑️ 清除结果</button>
+        </div>
+
+        <!-- 标签页 -->
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('preflight')">预检请求测试</button>
+            <button class="tab" onclick="showTab('actual')">实际请求测试</button>
+            <button class="tab" onclick="showTab('diagnosis')">系统诊断</button>
+            <button class="tab" onclick="showTab('logs')">日志分析</button>
+        </div>
+
+        <!-- 预检请求测试 -->
+        <div id="preflight" class="tab-content active">
+            <div class="test-section">
+                <h3>✈️ OPTIONS预检请求测试</h3>
+                <div id="progress-container" style="display: none;">
+                    <div class="progress-bar">
+                        <div id="progress-fill" class="progress-fill" style="width: 0%;"></div>
+                    </div>
+                    <div id="progress-text">测试进度: 0%</div>
+                </div>
+
+                <button class="test-button" onclick="testOptionsRequest('/official-api/news')">测试
+                    /official-api/news</button>
+                <button class="test-button" onclick="testOptionsRequest('/official-api/news/1')">测试
+                    /official-api/news/1</button>
+                <button class="test-button" onclick="testOptionsRequest('/api/doc')">测试 /api/doc</button>
+                <button class="test-button" onclick="testOptionsRequest('/cors_debug_test.php')">测试
+                    /cors_debug_test.php</button>
+
+                <div id="options-result" class="result info" style="display: none;"></div>
             </div>
-
-            <button onclick="testUrlFormat('relative')">测试相对路径</button>
-            <button onclick="testUrlFormat('protocol-relative')">测试协议相对路径</button>
-            <button onclick="testUrlFormat('http')">测试HTTP完整路径</button>
-            <button onclick="testUrlFormat('https')">测试HTTPS完整路径</button>
-
-            <div id="urlFormatResult" class="result" style="display:none;"></div>
         </div>
 
-        <div class="test-section">
-            <h3>测试2: CORS预检请求</h3>
-            <p>测试OPTIONS请求，验证CORS预检是否正常工作</p>
+        <!-- 实际请求测试 -->
+        <div id="actual" class="tab-content">
+            <div class="test-section">
+                <h3>📡 实际API请求测试</h3>
 
-            <button onclick="testCorsPreflight()">测试CORS预检请求</button>
-            <div id="corsPreflightResult" class="result" style="display:none;"></div>
+                <button class="test-button" onclick="testGetRequest('/official-api/news')">GET
+                    /official-api/news</button>
+                <button class="test-button" onclick="testPostRequest('/official-api/news')">POST
+                    /official-api/news</button>
+                <button class="test-button" onclick="testPutRequest('/official-api/news/1')">PUT
+                    /official-api/news/1</button>
+                <button class="test-button" onclick="testDeleteRequest('/official-api/news/1')">DELETE
+                    /official-api/news/1</button>
+
+                <div id="actual-result" class="result info" style="display: none;"></div>
+            </div>
         </div>
 
-        <div class="test-section">
-            <h3>测试3: 公共API接口</h3>
-            <p>测试实际的公共API接口，验证CORS配置是否生效</p>
+        <!-- 系统诊断 -->
+        <div id="diagnosis" class="tab-content">
+            <div class="test-section">
+                <h3>🔧 系统诊断</h3>
 
-            <button onclick="testPublicApi()">测试公共API</button>
-            <div id="publicApiResult" class="result" style="display:none;"></div>
+                <button class="test-button" onclick="runSystemDiagnosis()">运行系统诊断</button>
+                <button class="test-button" onclick="runProductionFix()">运行生产修复</button>
+
+                <div id="diagnosis-result" class="result info" style="display: none;"></div>
+            </div>
         </div>
 
-        <div class="test-section">
-            <h3>测试4: 调试脚本</h3>
-            <p>测试专门的调试脚本，获取详细的环境信息</p>
+        <!-- 日志分析 -->
+        <div id="logs" class="tab-content">
+            <div class="test-section">
+                <h3>📊 日志分析</h3>
 
-            <button onclick="testDebugScript()">测试调试脚本</button>
-            <div id="debugScriptResult" class="result" style="display:none;"></div>
+                <button class="test-button" onclick="checkErrorLogs()">检查错误日志</button>
+                <button class="test-button" onclick="checkAccessLogs()">检查访问日志</button>
+                <button class="test-button" onclick="checkCorsDebugLog()">检查CORS调试日志</button>
+
+                <div id="logs-result" class="result info" style="display: none;"></div>
+            </div>
         </div>
 
+        <!-- 综合结果 -->
         <div class="test-section">
-            <h3>测试5: 错误模拟</h3>
-            <p>模拟可能导致错误的请求</p>
-
-            <button onclick="testErrorSimulation()">模拟错误请求</button>
-            <div id="errorSimulationResult" class="result" style="display:none;"></div>
+            <h3>📋 测试总结</h3>
+            <div id="summary-result" class="result info" style="display: none;"></div>
         </div>
     </div>
 
     <script>
-        // 显示当前页面信息
-        function displayCurrentPageInfo() {
-            const info = {
-                '当前URL': window.location.href,
-                '协议': window.location.protocol,
-                '主机名': window.location.hostname,
-                '端口': window.location.port,
-                '路径名': window.location.pathname,
-                'Origin': window.location.origin
-            };
+        let testResults = {
+            preflight: [],
+            actual: [],
+            diagnosis: [],
+            logs: []
+        };
 
-            document.getElementById('currentPageInfo').innerHTML =
-                Object.entries(info).map(([key, value]) => `${key}: ${value}`).join('<br>');
+        // 标签页切换
+        function showTab(tabName) {
+            // 隐藏所有标签内容
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // 显示选中的标签
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
         }
 
-        // 显示URL格式
-        function displayUrlFormats() {
-            const host = window.location.host;
-            const origin = window.location.origin;
-
-            document.getElementById('relativePath').textContent = '/public-api/articles?type=news';
-            document.getElementById('protocolRelative').textContent = `//${host}/public-api/articles?type=news`;
-            document.getElementById('httpFull').textContent = `http://${host}/public-api/articles?type=news`;
-            document.getElementById('httpsFull').textContent = `https://${host}/public-api/articles?type=news`;
+        // 更新进度条
+        function updateProgress(current, total) {
+            const percentage = Math.round((current / total) * 100);
+            document.getElementById('progress-fill').style.width = percentage + '%';
+            document.getElementById('progress-text').textContent = `测试进度: ${percentage}%`;
         }
 
-        function showResult(elementId, data, type = 'info') {
-            const element = document.getElementById(elementId);
-            element.style.display = 'block';
-            element.className = `result ${type}`;
-
-            if (typeof data === 'object') {
-                element.textContent = JSON.stringify(data, null, 2);
-            } else {
-                element.textContent = data;
-            }
+        // 显示进度容器
+        function showProgress() {
+            document.getElementById('progress-container').style.display = 'block';
         }
 
-        function showStatus(elementId, message, status = 'pending') {
-            const element = document.getElementById(elementId);
-            element.style.display = 'block';
-
-            const statusClass = `status-${status}`;
-            element.innerHTML = `<span class="status-indicator ${statusClass}"></span>${message}`;
+        // 隐藏进度容器
+        function hideProgress() {
+            document.getElementById('progress-container').style.display = 'none';
         }
 
-        // 测试URL格式
-        async function testUrlFormat(format) {
-            const host = window.location.host;
-            let url;
+        // OPTIONS预检请求测试
+        async function testOptionsRequest(endpoint) {
+            const baseUrl = document.getElementById('baseUrl').value;
+            const testOrigin = document.getElementById('testOrigin').value;
+            const url = baseUrl + endpoint;
 
-            switch (format) {
-                case 'relative':
-                    url = '/public-api/articles?type=news&limit=5';
-                    break;
-                case 'protocol-relative':
-                    url = `//${host}/public-api/articles?type=news&limit=5`;
-                    break;
-                case 'http':
-                    url = `http://${host}/public-api/articles?type=news&limit=5`;
-                    break;
-                case 'https':
-                    url = `https://${host}/public-api/articles?type=news&limit=5`;
-                    break;
-            }
-
-            showStatus('urlFormatResult', `正在测试 ${format} 格式...`, 'pending');
+            const resultDiv = document.getElementById('options-result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = '正在测试 OPTIONS ' + endpoint + '...';
 
             try {
-                console.log(`Testing ${format} format:`, url);
-
-                const response = await fetch(url, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                });
-
-                const data = await response.json();
-
-                showResult('urlFormatResult', {
-                    'format': format,
-                    'url': url,
-                    'status': response.status,
-                    'statusText': response.statusText,
-                    'response': data,
-                    'success': true
-                }, 'success');
-
-            } catch (error) {
-                console.error(`${format} format error:`, error);
-
-                showResult('urlFormatResult', {
-                    'format': format,
-                    'url': url,
-                    'error': error.message,
-                    'stack': error.stack,
-                    'success': false
-                }, 'error');
-            }
-        }
-
-        // 测试CORS预检请求
-        async function testCorsPreflight() {
-            showStatus('corsPreflightResult', '正在测试CORS预检请求...', 'pending');
-
-            try {
-                const url = `${window.location.origin}/public-api/articles`;
-
                 const response = await fetch(url, {
                     method: 'OPTIONS',
                     headers: {
-                        'Origin': window.location.origin,
+                        'Origin': testOrigin,
                         'Access-Control-Request-Method': 'GET',
-                        'Access-Control-Request-Headers': 'Content-Type'
+                        'Access-Control-Request-Headers': 'Content-Type, Authorization'
                     }
                 });
 
                 const corsHeaders = {
-                    'Access-Control-Allow-Origin': response.headers.get('Access-Control-Allow-Origin'),
-                    'Access-Control-Allow-Methods': response.headers.get('Access-Control-Allow-Methods'),
-                    'Access-Control-Allow-Headers': response.headers.get('Access-Control-Allow-Headers'),
-                    'Access-Control-Max-Age': response.headers.get('Access-Control-Max-Age')
+                    'access-control-allow-origin': response.headers.get('Access-Control-Allow-Origin'),
+                    'access-control-allow-methods': response.headers.get('Access-Control-Allow-Methods'),
+                    'access-control-allow-headers': response.headers.get('Access-Control-Allow-Headers'),
+                    'access-control-max-age': response.headers.get('Access-Control-Max-Age')
                 };
 
-                showResult('corsPreflightResult', {
-                    'status': response.status,
-                    'statusText': response.statusText,
-                    'corsHeaders': corsHeaders,
-                    'allHeaders': Object.fromEntries(response.headers.entries()),
-                    'success': true
-                }, 'success');
+                const result = {
+                    endpoint: endpoint,
+                    status: response.status,
+                    statusText: response.statusText,
+                    corsHeaders: corsHeaders,
+                    success: response.status === 200 && corsHeaders['access-control-allow-origin'] !== null,
+                    timestamp: new Date().toISOString()
+                };
 
-            } catch (error) {
-                console.error('CORS preflight error:', error);
+                testResults.preflight.push(result);
 
-                showResult('corsPreflightResult', {
-                    'error': error.message,
-                    'stack': error.stack,
-                    'success': false
-                }, 'error');
-            }
-        }
-
-        // 测试公共API
-        async function testPublicApi() {
-            showStatus('publicApiResult', '正在测试公共API接口...', 'pending');
-
-            try {
-                const url = `${window.location.origin}/public-api/articles?type=news&limit=5`;
-
-                const response = await fetch(url);
-                const data = await response.json();
-
-                showResult('publicApiResult', {
-                    'url': url,
-                    'status': response.status,
-                    'statusText': response.statusText,
-                    'response': data,
-                    'success': true
-                }, 'success');
-
-            } catch (error) {
-                console.error('Public API error:', error);
-
-                showResult('publicApiResult', {
-                    'error': error.message,
-                    'stack': error.stack,
-                    'success': false
-                }, 'error');
-            }
-        }
-
-        // 测试调试脚本
-        async function testDebugScript() {
-            showStatus('debugScriptResult', '正在测试调试脚本...', 'pending');
-
-            try {
-                const url = `${window.location.origin}/cors_debug_test.php`;
-
-                const response = await fetch(url);
-                const data = await response.json();
-
-                showResult('debugScriptResult', {
-                    'url': url,
-                    'status': response.status,
-                    'statusText': response.statusText,
-                    'debugInfo': data,
-                    'success': true
-                }, 'success');
-
-            } catch (error) {
-                console.error('Debug script error:', error);
-
-                showResult('debugScriptResult', {
-                    'error': error.message,
-                    'stack': error.stack,
-                    'success': false
-                }, 'error');
-            }
-        }
-
-        // 错误模拟
-        async function testErrorSimulation() {
-            showStatus('errorSimulationResult', '正在模拟错误请求...', 'pending');
-
-            const testCases = [
-                {
-                    name: '缺少协议的URL',
-                    url: `//${window.location.host}/public-api/articles?type=news`,
-                    description: '这种格式可能导致 "URL scheme must be http or https" 错误'
-                },
-                {
-                    name: '不存在的路径',
-                    url: `${window.location.origin}/non-existent-path`,
-                    description: '测试404错误处理'
-                },
-                {
-                    name: '无效的参数',
-                    url: `${window.location.origin}/public-api/articles?type=invalid`,
-                    description: '测试参数验证错误'
+                let output = `✅ OPTIONS ${endpoint} 测试完成\n\n`;
+                output += `状态码: ${response.status} ${response.statusText}\n`;
+                output += `CORS头:\n`;
+                for (const [key, value] of Object.entries(corsHeaders)) {
+                    output += `  ${key}: ${value || '未设置'}\n`;
                 }
+                output += `\n测试结果: ${result.success ? '✅ 通过' : '❌ 失败'}\n`;
+                output += `时间戳: ${result.timestamp}`;
+
+                resultDiv.className = result.success ? 'result success' : 'result error';
+                resultDiv.textContent = output;
+
+            } catch (error) {
+                const result = {
+                    endpoint: endpoint,
+                    error: error.message,
+                    success: false,
+                    timestamp: new Date().toISOString()
+                };
+
+                testResults.preflight.push(result);
+
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ OPTIONS ${endpoint} 测试失败\n\n错误: ${error.message}\n时间戳: ${result.timestamp}`;
+            }
+        }
+
+        // GET请求测试
+        async function testGetRequest(endpoint) {
+            await testActualRequest('GET', endpoint);
+        }
+
+        // POST请求测试
+        async function testPostRequest(endpoint) {
+            await testActualRequest('POST', endpoint, { name: 'Test Article', content: 'Test content' });
+        }
+
+        // PUT请求测试
+        async function testPutRequest(endpoint) {
+            await testActualRequest('PUT', endpoint, { name: 'Updated Article', content: 'Updated content' });
+        }
+
+        // DELETE请求测试
+        async function testDeleteRequest(endpoint) {
+            await testActualRequest('DELETE', endpoint);
+        }
+
+        // 实际请求测试
+        async function testActualRequest(method, endpoint, data = null) {
+            const baseUrl = document.getElementById('baseUrl').value;
+            const testOrigin = document.getElementById('testOrigin').value;
+            const url = baseUrl + endpoint;
+
+            const resultDiv = document.getElementById('actual-result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = `正在测试 ${method} ${endpoint}...`;
+
+            const options = {
+                method: method,
+                headers: {
+                    'Origin': testOrigin,
+                    'Content-Type': 'application/json'
+                }
+            };
+
+            if (data && (method === 'POST' || method === 'PUT')) {
+                options.body = JSON.stringify(data);
+            }
+
+            try {
+                const response = await fetch(url, options);
+
+                const responseData = await response.text();
+
+                const result = {
+                    method: method,
+                    endpoint: endpoint,
+                    status: response.status,
+                    statusText: response.statusText,
+                    corsHeaders: {
+                        'access-control-allow-origin': response.headers.get('Access-Control-Allow-Origin'),
+                        'access-control-allow-methods': response.headers.get('Access-Control-Allow-Methods'),
+                        'access-control-allow-headers': response.headers.get('Access-Control-Allow-Headers')
+                    },
+                    response: responseData.substring(0, 500), // 限制响应长度
+                    success: response.ok || response.status < 400,
+                    timestamp: new Date().toISOString()
+                };
+
+                testResults.actual.push(result);
+
+                let output = `✅ ${method} ${endpoint} 测试完成\n\n`;
+                output += `状态码: ${response.status} ${response.statusText}\n`;
+                output += `CORS头:\n`;
+                for (const [key, value] of Object.entries(result.corsHeaders)) {
+                    output += `  ${key}: ${value || '未设置'}\n`;
+                }
+                output += `\n响应数据 (前500字符):\n${result.response}\n`;
+                output += `\n测试结果: ${result.success ? '✅ 通过' : '❌ 失败'}\n`;
+                output += `时间戳: ${result.timestamp}`;
+
+                resultDiv.className = result.success ? 'result success' : 'result error';
+                resultDiv.textContent = output;
+
+            } catch (error) {
+                const result = {
+                    method: method,
+                    endpoint: endpoint,
+                    error: error.message,
+                    success: false,
+                    timestamp: new Date().toISOString()
+                };
+
+                testResults.actual.push(result);
+
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ ${method} ${endpoint} 测试失败\n\n错误: ${error.message}\n时间戳: ${result.timestamp}`;
+            }
+        }
+
+        // 运行系统诊断
+        async function runSystemDiagnosis() {
+            const baseUrl = document.getElementById('baseUrl').value;
+            const resultDiv = document.getElementById('diagnosis-result');
+
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = '正在运行系统诊断...';
+
+            try {
+                const response = await fetch(baseUrl + '/cors_system_diagnosis.php?action=diagnose');
+                const diagnosis = await response.json();
+
+                testResults.diagnosis.push(diagnosis);
+
+                let output = `🔧 系统诊断完成\n\n`;
+                output += `诊断状态: ${diagnosis.success ? '✅ 成功' : '❌ 失败'}\n`;
+                output += `时间戳: ${diagnosis.timestamp}\n\n`;
+
+                if (diagnosis.diagnosis) {
+                    output += `环境检查:\n`;
+                    const env = diagnosis.diagnosis.environment_check;
+                    output += `  APP_ENV: ${env.app_env}\n`;
+                    output += `  CORS_ALLOW_ORIGIN: ${env.cors_allow_origin}\n\n`;
+
+                    output += `CORS配置:\n`;
+                    const cors = diagnosis.diagnosis.cors_configuration;
+                    output += `  Bundle启用: ${cors.cors_bundle_enabled ? '✅' : '❌'}\n`;
+                    output += `  配置文件存在: ${cors.nelmio_cors_file_exists ? '✅' : '❌'}\n\n`;
+                }
+
+                if (diagnosis.recommendations && diagnosis.recommendations.length > 0) {
+                    output += `建议:\n`;
+                    diagnosis.recommendations.forEach(rec => {
+                        output += `  [${rec.priority}] ${rec.issue}: ${rec.description}\n`;
+                    });
+                }
+
+                resultDiv.className = diagnosis.success ? 'result success' : 'result error';
+                resultDiv.textContent = output;
+
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ 系统诊断失败\n\n错误: ${error.message}`;
+            }
+        }
+
+        // 运行生产修复
+        async function runProductionFix() {
+            const baseUrl = document.getElementById('baseUrl').value;
+            const resultDiv = document.getElementById('diagnosis-result');
+
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = '正在运行生产修复...';
+
+            try {
+                const response = await fetch(baseUrl + '/cors_production_fix.php?action=diagnose&clear_cache=1');
+                const fix = await response.json();
+
+                let output = `🔧 生产修复完成\n\n`;
+                output += `修复状态: ${fix.success ? '✅ 成功' : '❌ 失败'}\n`;
+                output += `时间戳: ${fix.timestamp}\n\n`;
+
+                if (fix.fixes) {
+                    output += `应用的修复:\n`;
+                    output += `  修复数量: ${fix.fixes.fixes_applied}\n`;
+                    fix.fixes.fixes_list.forEach(fix_item => {
+                        output += `  - ${fix_item}\n`;
+                    });
+                }
+
+                if (fix.recommendations) {
+                    output += `\n建议:\n`;
+                    output += `立即操作:\n`;
+                    fix.recommendations.immediate_actions.forEach(action => {
+                        output += `  ${action}\n`;
+                    });
+                }
+
+                resultDiv.className = fix.success ? 'result success' : 'result error';
+                resultDiv.textContent = output;
+
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ 生产修复失败\n\n错误: ${error.message}`;
+            }
+        }
+
+        // 运行所有测试
+        async function runAllTests() {
+            showProgress();
+            clearResults();
+
+            const tests = [
+                () => testOptionsRequest('/official-api/news'),
+                () => testOptionsRequest('/official-api/news/1'),
+                () => testGetRequest('/official-api/news'),
+                () => runSystemDiagnosis()
             ];
 
-            const results = [];
-
-            for (const testCase of testCases) {
-                try {
-                    const response = await fetch(testCase.url);
-                    const data = await response.json().catch(() => ({ error: 'Invalid JSON response' }));
-
-                    results.push({
-                        name: testCase.name,
-                        url: testCase.url,
-                        description: testCase.description,
-                        status: response.status,
-                        statusText: response.statusText,
-                        response: data,
-                        success: true
-                    });
-
-                } catch (error) {
-                    results.push({
-                        name: testCase.name,
-                        url: testCase.url,
-                        description: testCase.description,
-                        error: error.message,
-                        stack: error.stack,
-                        success: false
-                    });
-                }
+            for (let i = 0; i < tests.length; i++) {
+                updateProgress(i, tests.length);
+                await tests[i]();
+                await new Promise(resolve => setTimeout(resolve, 1000)); // 等待1秒
             }
 
-            showResult('errorSimulationResult', results, results.some(r => !r.success) ? 'warning' : 'success');
+            updateProgress(tests.length, tests.length);
+            generateSummary();
+
+            setTimeout(hideProgress, 2000);
         }
 
-        // 页面加载时初始化
-        window.onload = function () {
-            console.log('CORS 综合测试页面已加载');
-            displayCurrentPageInfo();
-            displayUrlFormats();
-        };
+        // 生成测试总结
+        function generateSummary() {
+            const summaryDiv = document.getElementById('summary-result');
+            summaryDiv.style.display = 'block';
+
+            let output = `📋 CORS测试总结\n\n`;
+            output += `测试时间: ${new Date().toISOString()}\n\n`;
+
+            // 预检请求统计
+            const preflightPassed = testResults.preflight.filter(r => r.success).length;
+            const preflightTotal = testResults.preflight.length;
+            output += `预检请求测试: ${preflightPassed}/${preflightTotal} 通过\n`;
+
+            // 实际请求统计
+            const actualPassed = testResults.actual.filter(r => r.success).length;
+            const actualTotal = testResults.actual.length;
+            output += `实际请求测试: ${actualPassed}/${actualTotal} 通过\n`;
+
+            // 诊断统计
+            const diagnosisCompleted = testResults.diagnosis.length;
+            output += `系统诊断: ${diagnosisCompleted} 完成\n\n`;
+
+            // 总体状态
+            const totalTests = preflightTotal + actualTotal;
+            const totalPassed = preflightPassed + actualPassed;
+            const successRate = totalTests > 0 ? Math.round((totalPassed / totalTests) * 100) : 0;
+
+            output += `总体成功率: ${successRate}%\n`;
+
+            if (successRate === 100) {
+                output += `\n🎉 所有测试通过！CORS配置正常工作。`;
+                summaryDiv.className = 'result success';
+            } else if (successRate >= 50) {
+                output += `\n⚠️ 部分测试失败，需要进一步检查CORS配置。`;
+                summaryDiv.className = 'result warning';
+            } else {
+                output += `\n❌ 大部分测试失败，CORS配置存在严重问题。`;
+                summaryDiv.className = 'result error';
+            }
+
+            summaryDiv.textContent = output;
+        }
+
+        // 清除结果
+        function clearResults() {
+            testResults = {
+                preflight: [],
+                actual: [],
+                diagnosis: [],
+                logs: []
+            };
+
+            document.querySelectorAll('.result').forEach(result => {
+                result.style.display = 'none';
+                result.textContent = '';
+            });
+        }
+
+        // 检查错误日志（模拟）
+        function checkErrorLogs() {
+            const resultDiv = document.getElementById('logs-result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = '📊 错误日志检查功能需要服务器端支持\n\n建议:\n1. 检查 /var/log/nginx/error.log\n2. 检查 /var/log/php_errors.log\n3. 检查 Symfony var/log 目录\n4. 查看应用错误日志';
+        }
+
+        // 检查访问日志（模拟）
+        function checkAccessLogs() {
+            const resultDiv = document.getElementById('logs-result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = '📊 访问日志检查功能需要服务器端支持\n\n建议:\n1. 检查 /var/log/nginx/access.log\n2. 查找CORS相关的请求\n3. 分析OPTIONS请求的状态码\n4. 检查响应头中的CORS设置';
+        }
+
+        // 检查CORS调试日志
+        async function checkCorsDebugLog() {
+            const baseUrl = document.getElementById('baseUrl').value;
+            const resultDiv = document.getElementById('logs-result');
+
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = '正在检查CORS调试日志...';
+
+            try {
+                const response = await fetch(baseUrl + '/cors_debug.log');
+                if (response.ok) {
+                    const logContent = await response.text();
+                    const recentLogs = logContent.split('\n').slice(-10).join('\n'); // 最近10行
+
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `📊 最近CORS调试日志:\n\n${recentLogs}`;
+                } else {
+                    resultDiv.className = 'result warning';
+                    resultDiv.textContent = 'CORS调试日志文件不存在或无法访问\n\n请确保:\n1. CorsDebugSubscriber已启用\n2. 日志文件可写\n3. APP_DEBUG=true';
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ 无法读取CORS调试日志\n\n错误: ${error.message}`;
+            }
+        }
+
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', function () {
+            // 从URL参数读取配置
+            const urlParams = new URLSearchParams(window.location.search);
+            const baseUrl = urlParams.get('baseUrl');
+            const testOrigin = urlParams.get('testOrigin');
+
+            if (baseUrl) {
+                document.getElementById('baseUrl').value = baseUrl;
+            }
+            if (testOrigin) {
+                document.getElementById('testOrigin').value = testOrigin;
+            }
+        });
     </script>
 </body>
 
