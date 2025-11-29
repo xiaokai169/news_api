@@ -35,6 +35,14 @@ class ApiExceptionSubscriber implements EventSubscriberInterface
                         str_starts_with($path, '/official-api') ||
                         str_starts_with($path, '/public-api');
 
+        // 🪝 CORS调试日志
+        if ($request->getMethod() === 'OPTIONS') {
+            error_log('[CORS DEBUG] OPTIONS请求 - 路径: ' . $path .
+                     ', Origin: ' . ($request->headers->get('Origin') ?? 'none') .
+                     ', Request-Method: ' . ($request->headers->get('Access-Control-Request-Method') ?? 'none') .
+                     ', Request-Headers: ' . ($request->headers->get('Access-Control-Request-Headers') ?? 'none'));
+        }
+
         // 如果不是 API 请求，不处理，交给 Symfony 默认异常处理（比如返回 HTML 500 页面）
         if (!$isApiRequest) {
             return;
