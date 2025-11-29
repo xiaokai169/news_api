@@ -1,66 +1,50 @@
 <?php
 /**
- * CORS 调试测试脚本
- * 用于验证CORS配置和URL格式问题
+ * CORS调试测试脚本
+ * 用于验证CORS配置和预检请求处理
  */
 
-// 设置响应头
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
+
+// 记录调试信息
+$debug = [
+    'timestamp' => date('Y-m-d H:i:s'),
+    'method' => $_SERVER['REQUEST_METHOD'],
+    'path' => $_SERVER['REQUEST_URI'] ?? 'unknown',
+    'origin' => $_SERVER['HTTP_ORIGIN'] ?? 'none',
+    'headers' => getallheaders(),
+    'request_method' => $_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD'] ?? 'none',
+    'request_headers' => $_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS'] ?? 'none',
+];
 
 // 处理OPTIONS预检请求
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    $debug['is_preflight'] = true;
+
+    // 设置CORS头
+    header('Access-Control-Allow-Origin: *');
+    header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS');
+    header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
+    header('Access-Control-Max-Age: 3600');
+
     http_response_code(200);
+    echo json_encode([
+        'success' => true,
+        'message' => 'CORS preflight request handled successfully',
+        'debug' => $debug
+    ]);
     exit;
 }
 
-$debug_info = [
-    'timestamp' => date('Y-m-d H:i:s'),
-    'request_method' => $_SERVER['REQUEST_METHOD'],
-    'request_uri' => $_SERVER['REQUEST_URI'] ?? 'unknown',
-    'http_host' => $_SERVER['HTTP_HOST'] ?? 'unknown',
-    'https' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on',
-    'server_port' => $_SERVER['SERVER_PORT'] ?? 'unknown',
-    'protocol' => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https' : 'http',
-    'full_url' => '',
-    'origin' => $_SERVER['HTTP_ORIGIN'] ?? 'not set',
-    'referer' => $_SERVER['HTTP_REFERER'] ?? 'not set',
-    'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'not set',
-    'cors_headers' => [
-        'Access-Control-Allow-Origin' => '*',
-        'Access-Control-Allow-Methods' => 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers' => 'Content-Type, Authorization, X-Requested-With'
-    ]
-];
+$debug['is_preflight'] = false;
 
-// 构建完整URL
-$scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https' : 'http';
-$host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-$uri = $_SERVER['REQUEST_URI'] ?? '/';
-$debug_info['full_url'] = $scheme . '://' . $host . $uri;
-
-// 测试不同的URL格式
-$test_urls = [
-    'relative_path' => '/public-api/articles?type=news',
-    'protocol_relative' => '//' . $host . '/public-api/articles?type=news',
-    'http_full' => 'http://' . $host . '/public-api/articles?type=news',
-    'https_full' => 'https://' . $host . '/public-api/articles?type=news',
-];
-
-$debug_info['test_urls'] = $test_urls;
-
-// 检查当前环境
-$debug_info['environment'] = [
-    'php_version' => PHP_VERSION,
-    'server_software' => $_SERVER['SERVER_SOFTWARE'] ?? 'unknown',
-    'document_root' => $_SERVER['DOCUMENT_ROOT'] ?? 'unknown',
-    'script_name' => $_SERVER['SCRIPT_NAME'] ?? 'unknown',
-];
+// 处理其他请求
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
 
 echo json_encode([
     'success' => true,
-    'message' => 'CORS 调试信息',
-    'debug_info' => $debug_info
-], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    'message' => 'CORS test endpoint',
+    'debug' => $debug
+]);

@@ -42,11 +42,11 @@ location ~ ^/(api|official-api|public-api) {
     error_page 500 502 503 504 /api_500.json;
 }
 
-# 处理API 404错误，返回JSON格式
+# 处理API 404错误，返回JSON格式（与ApiResponse类保持一致）
 location = /api_404.json {
     internal;
     add_header Content-Type application/json;
-    return 404 '{"success": false, "message": "API endpoint not found", "error_code": 404}';
+    return 404 '{"status": "404", "message": "API endpoint not found", "timestamp": 0}';
 }
 ```
 
