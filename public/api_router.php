@@ -15,6 +15,17 @@ $path = parse_url($requestUri, PHP_URL_PATH);
 // 移除查询字符串
 $path = explode('?', $path)[0];
 
+// 处理OPTIONS预检请求
+if ($method === 'OPTIONS') {
+    header('Access-Control-Allow-Origin: *');
+    header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS');
+    header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, Accept, Origin, X-Custom-Header, X-Request-Id, x-request-id, X-Request-ID');
+    header('Access-Control-Max-Age: 3600');
+    header('Access-Control-Allow-Credentials: false');
+    http_response_code(200);
+    exit;
+}
+
 // 路由定义
 $routes = [
     'GET /api/health' => 'handleHealth',
@@ -25,6 +36,11 @@ $routes = [
     'GET /official-api/news/{id}' => 'handleNewsShow',
     'PUT /official-api/news/{id}' => 'handleNewsUpdate',
     'DELETE /official-api/news/{id}' => 'handleNewsDelete',
+    'OPTIONS /api/health' => 'handleOptions',
+    'OPTIONS /api/test' => 'handleOptions',
+    'OPTIONS /api/info' => 'handleOptions',
+    'OPTIONS /official-api/news' => 'handleOptions',
+    'OPTIONS /official-api/news/{id}' => 'handleOptions',
 ];
 
 // 路由匹配
@@ -268,4 +284,16 @@ function handleNewsDelete($params) {
         'message' => '删除成功',
         'data' => ['id' => (int)$id]
     ];
+}
+
+function handleOptions($params = []) {
+    // 设置CORS头
+    header('Access-Control-Allow-Origin: *');
+    header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS');
+    header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, Accept, Origin, X-Custom-Header, X-Request-Id, x-request-id, X-Request-ID');
+    header('Access-Control-Max-Age: 3600');
+    header('Access-Control-Allow-Credentials: false');
+    http_response_code(200);
+
+    return ['code' => 200, 'message' => 'CORS preflight successful'];
 }

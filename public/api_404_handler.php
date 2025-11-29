@@ -4,6 +4,17 @@
  * 当Nginx配置无法立即修改时，可作为临时解决方案
  */
 
+// 处理OPTIONS预检请求
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    header('Access-Control-Allow-Origin: *');
+    header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS');
+    header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, Accept, Origin, X-Custom-Header, X-Request-Id, x-request-id, X-Request-ID');
+    header('Access-Control-Max-Age: 3600');
+    header('Access-Control-Allow-Credentials: false');
+    http_response_code(200);
+    exit;
+}
+
 header('Content-Type: application/json');
 http_response_code(404);
 
