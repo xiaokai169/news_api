@@ -31,7 +31,11 @@ if (!function_exists('dbConnectionChecker')) {
     }
 
     try {
-        $kernel = new Kernel($_ENV['APP_ENV'], (bool) $_ENV['APP_DEBUG']);
+        // 确保环境变量存在
+        $env = $_ENV['APP_ENV'] ?? getenv('APP_ENV') ?? 'prod';
+        $debug = $_ENV['APP_DEBUG'] ?? getenv('APP_DEBUG') ?? false;
+
+        $kernel = new Kernel($env, (bool) $debug);
         $kernel->boot();
 
         $container = $kernel->getContainer();
@@ -324,7 +328,11 @@ if (!function_exists('dbConnectionChecker')) {
 // 处理单独的连接测试请求
 if (isset($_GET['test'])) {
     try {
-        $kernel = new Kernel($_ENV['APP_ENV'], (bool) $_ENV['APP_DEBUG']);
+        // 确保环境变量存在
+        $env = $_ENV['APP_ENV'] ?? getenv('APP_ENV') ?? 'prod';
+        $debug = $_ENV['APP_DEBUG'] ?? getenv('APP_DEBUG') ?? false;
+
+        $kernel = new Kernel($env, (bool) $debug);
         $kernel->boot();
         $doctrine = $kernel->getContainer()->get('doctrine');
         $connection = $doctrine->getConnection($_GET['test']);
