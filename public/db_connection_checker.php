@@ -52,7 +52,6 @@ if (!function_exists('dbConnectionChecker')) {
 
         $container = $kernel->getContainer();
         $doctrine = $container->get('doctrine');
-        $entityManager = $container->get(EntityManagerInterface::class);
 
         // 获取所有连接信息
         $allConnections = $doctrine->getConnections();
