@@ -5,7 +5,19 @@ use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\DBAL\Connection;
 use Doctrine\Persistence\ManagerRegistry;
 
-require_once dirname(__DIR__).'/vendor/autoload_runtime.php';
+// 加载环境变量
+if (file_exists(dirname(__DIR__).'/.env')) {
+    $lines = file(dirname(__DIR__).'/.env', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        if (strpos($line, '#') === 0) continue;
+        if (strpos($line, '=') === false) continue;
+        list($key, $value) = explode('=', $line, 2);
+        $_ENV[trim($key)] = trim($value);
+        putenv(trim($key).'='.trim($value));
+    }
+}
+
+require_once dirname(__DIR__).'/vendor/autoload.php';
 
 if (!function_exists('dbConnectionChecker')) {
     function dbConnectionChecker() {
