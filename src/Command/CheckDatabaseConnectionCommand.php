@@ -244,9 +244,28 @@ class CheckDatabaseConnectionCommand extends Command
         try {
             $info['connection_name'] = $manager->getConnection()->getDatabasePlatform()->getName();
 
-            $metadataDriver = $manager->getConfiguration()->getMetadataDriverImpl();
-            if ($metadataDriver) {
-                $info['entity_paths'] = $metadataDriver->getPaths();
+            // 获取实体路径 - 使用更安全的方法
+            try {
+                $metadataDriver = $manager->getConfiguration()->getMetadataDriverImpl();
+                if ($metadataDriver && method_exists($metadataDriver, 'getPaths')) {
+                    $info['entity_paths'] = $metadataDriver->getPaths();
+                } elseif ($metadataDriver && method_exists($metadataDriver, 'getNamespace')) {
+                    // 如果是 XmlDriver 或其他驱动，尝试获取命名空间
+                    $info['entity_paths'] = [$metadataDriver->getNamespace()];
+                } else {
+                    // 从实体管理器的元数据中获取实体路径
+                    $metadataFactory = $manager->getMetadataFactory();
+                    $entityNames = $metadataFactory->getAllMetadata();
+                    $paths = [];
+                    foreach ($entityNames as $metadata) {
+                        if ($metadata->reflClass) {
+                            $paths[] = dirname($metadata->reflClass->getFileName());
+                        }
+                    }
+                    $info['entity_paths'] = array_unique($paths);
+                }
+            } catch (\Exception $e) {
+                $info['entity_paths'] = ['Unable to determine paths: ' . $e->getMessage()];
             }
 
             $info['status'] = 'connected';
