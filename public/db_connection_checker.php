@@ -7,7 +7,8 @@ use Doctrine\Persistence\ManagerRegistry;
 
 require_once dirname(__DIR__).'/vendor/autoload_runtime.php';
 
-function dbConnectionChecker() {
+if (!function_exists('dbConnectionChecker')) {
+    function dbConnectionChecker() {
     $startTime = microtime(true);
 
     // 安全检查：只允许特定IP访问或在开发环境
@@ -108,13 +109,39 @@ function dbConnectionChecker() {
                     'name' => $name,
                     'is_default' => $name === $defaultManager,
                     'connection_name' => $manager->getConnection()->getDatabasePlatform()->getName(),
-                    'entity_paths' => $manager->getConfiguration()->getMetadataDriverImpl()->getPaths()
+                    'entity_paths' => []
                 ];
+
+                // 获取实体路径 - 使用更安全的方法
+                try {
+                    $metadataDriver = $manager->getConfiguration()->getMetadataDriverImpl();
+                    if ($metadataDriver && method_exists($metadataDriver, 'getPaths')) {
+                        $managerInfo[$name]['entity_paths'] = $metadataDriver->getPaths();
+                    } elseif ($metadataDriver && method_exists($metadataDriver, 'getNamespace')) {
+                        // 如果是 XmlDriver 或其他驱动，尝试获取命名空间
+                        $managerInfo[$name]['entity_paths'] = [$metadataDriver->getNamespace()];
+                    } else {
+                        // 从实体管理器的元数据中获取实体路径
+                        $metadataFactory = $manager->getMetadataFactory();
+                        $entityNames = $metadataFactory->getAllMetadata();
+                        $paths = [];
+                        foreach ($entityNames as $metadata) {
+                            if ($metadata->reflClass) {
+                                $paths[] = dirname($metadata->reflClass->getFileName());
+                            }
+                        }
+                        $managerInfo[$name]['entity_paths'] = array_unique($paths);
+                    }
+                } catch (\Exception $e) {
+                    $managerInfo[$name]['entity_paths'] = ['Unable to determine paths: ' . $e->getMessage()];
+                }
+
             } catch (\Exception $e) {
                 $managerInfo[$name] = [
                     'name' => $name,
                     'is_default' => $name === $defaultManager,
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
+                    'entity_paths' => []
                 ];
             }
         }
@@ -290,6 +317,7 @@ function dbConnectionChecker() {
             <p><strong>错误位置:</strong> ' . htmlspecialchars($e->getFile() . ':' . $e->getLine()) . '</p>
             <pre style="background: #f8f9fa; padding: 10px; border-radius: 4px; overflow: auto;">' . htmlspecialchars($e->getTraceAsString()) . '</pre>
         </div>';
+    }
     }
 }
 
