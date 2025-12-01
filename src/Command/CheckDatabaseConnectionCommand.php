@@ -208,7 +208,7 @@ class CheckDatabaseConnectionCommand extends Command
                     $testResult = $connection->executeQuery('
                         SELECT
                             1 as test_value,
-                            NOW() as current_time,
+                            NOW() as `current_time`,
                             CONNECTION_ID() as connection_id,
                             USER() as current_user
                     ')->fetchAssociative();
