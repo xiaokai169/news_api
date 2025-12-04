@@ -23,7 +23,7 @@ doctrine:
     orm:
         auto_generate_proxy_classes: true
         enable_lazy_ghost_objects: true
-        default_entity_manager: user  # 将默认实体管理器设置为用户数据库，因为安全组件使用它
+        default_entity_manager: default  # 修复：将默认实体管理器设置为默认连接，解决500错误
         entity_managers:
             default:
                 connection: default

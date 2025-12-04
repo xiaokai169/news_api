@@ -1,3 +1,18 @@
+# PHP 配置修复 - 解决 502 错误
+# 增加内存限制到 512M
+php_value memory_limit 512M
+php_value post_max_size 32M
+php_value upload_max_filesize 32M
+php_value max_execution_time 300
+php_value max_input_time 300
+
+# 错误日志配置
+php_value log_errors On
+php_value error_reporting E_ALL
+php_value display_errors Off
+# 设置错误日志路径（相对于项目根目录）
+php_value error_log /var/log/php_errors.log
+
 RewriteEngine On
 
 # 如果请求的是存在的文件或目录，直接访问

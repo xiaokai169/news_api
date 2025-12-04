@@ -86,6 +86,14 @@ class SysNewsArticleCategoryController extends AbstractController
     #[Route('', name: 'api_sys_news_category_create', methods: ['POST'])]
     public function create(#[MapRequestPayload] CreateCategoryDto $createCategoryDto): JsonResponse
     {
+        // 调试日志：记录请求开始
+        error_log("=== API CREATE CATEGORY DEBUG START--------- ===");
+        error_log("Request data: " . json_encode([
+            'code' => $createCategoryDto->getCode(),
+            'name' => $createCategoryDto->getName(),
+            'creator' => $createCategoryDto->getCreator()
+        ], JSON_UNESCAPED_UNICODE));
+
         try {
             // DTO验证（Symfony自动验证）
             $errors = $this->validator->validate($createCategoryDto);
@@ -94,19 +102,32 @@ class SysNewsArticleCategoryController extends AbstractController
                 foreach ($errors as $error) {
                     $errorMessages[] = $error->getMessage();
                 }
+                error_log("DTO validation failed: " . implode(', ', $errorMessages));
                 return $this->apiResponse->error('验证失败: ' . implode(', ', $errorMessages), Response::HTTP_BAD_REQUEST);
             }
+            error_log("DTO validation passed");
 
             // 检查分类编码是否已存在
-            if ($this->categoryRepository->existsByCode($createCategoryDto->getCode())) {
+            $existsByCode = $this->categoryRepository->existsByCode($createCategoryDto->getCode());
+            error_log("Checking if code exists: " . $createCategoryDto->getCode() . " - exists: " . ($existsByCode ? 'true' : 'false'));
+
+            if ($existsByCode) {
+                error_log("Code already exists, returning error");
                 return $this->apiResponse->error('该分类编码已存在', Response::HTTP_BAD_REQUEST);
             }
 
             // 创建分类实体
+            error_log("Creating entity...");
             $category = new SysNewsArticleCategory();
             $category->setCode($createCategoryDto->getCode());
             $category->setName($createCategoryDto->getName());
             $category->setCreator($createCategoryDto->getCreator() ?: '系统');
+
+            error_log("Entity created with data: " . json_encode([
+                'code' => $category->getCode(),
+                'name' => $category->getName(),
+                'creator' => $category->getCreator()
+            ], JSON_UNESCAPED_UNICODE));
 
             // 验证实体
             $entityErrors = $this->validator->validate($category);
@@ -115,14 +136,30 @@ class SysNewsArticleCategoryController extends AbstractController
                 foreach ($entityErrors as $error) {
                     $errorMessages[] = $error->getMessage();
                 }
+                error_log("Entity validation failed: " . implode(', ', $errorMessages));
                 return $this->apiResponse->error('实体验证失败: ' . implode(', ', $errorMessages), Response::HTTP_BAD_REQUEST);
             }
+            error_log("Entity validation passed");
 
+            // 持久化操作
+            error_log("Calling entityManager->persist()...");
             $this->entityManager->persist($category);
-            $this->entityManager->flush();
+            error_log("persist() completed");
 
-            return $this->apiResponse->success($category, Response::HTTP_CREATED, ['groups' => ['SysNewsArticleCategory:read']]);
+            error_log("Calling entityManager->flush()...");
+            $this->entityManager->flush();
+            error_log("flush() completed");
+
+            $categoryId = $category->getId();
+            error_log("Entity saved with ID: " . $categoryId);
+
+            $response = $this->apiResponse->success($category, Response::HTTP_CREATED, ['groups' => ['SysNewsArticleCategory:read']]);
+            error_log("=== API CREATE CATEGORY DEBUG END SUCCESS ===");
+            return $response;
         } catch (\Exception $e) {
+            error_log("Exception caught: " . $e->getMessage());
+            error_log("Exception trace: " . $e->getTraceAsString());
+            error_log("=== API CREATE CATEGORY DEBUG END ERROR ===");
             return $this->apiResponse->error('创建失败: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
