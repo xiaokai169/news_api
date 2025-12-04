@@ -60,7 +60,7 @@ class SyncWechatDto extends AbstractRequestDto
         enum: ['recent', 'all', 'custom'],
         example: 'recent'
     )]
-    protected string $syncScope = 'recent';
+    protected string $syncScope = 'all';
 
     /**
      * 同步开始时间
