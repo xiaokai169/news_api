@@ -11,7 +11,8 @@ try {
     $kernel = new Kernel('dev', true);
     $kernel->boot();
     $container = $kernel->getContainer();
-    $accountRepository = $container->get('App\Repository\WechatPublicAccountRepository');
+    $entityManager = $container->get('doctrine.orm.entity_manager');
+    $accountRepository = $entityManager->getRepository(\App\Entity\WechatPublicAccount::class);
 
     echo "1. 检查公众号账户配置:\n";
     $accounts = $accountRepository->findAll();
