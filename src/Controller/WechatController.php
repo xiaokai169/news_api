@@ -56,7 +56,7 @@ class WechatController extends AbstractController
                 return $this->apiResponse->error('数据验证失败: ' . $this->formatValidationErrors($validationErrors), Response::HTTP_BAD_REQUEST);
             }
 
-            $publicAccountId = $syncArticlesDto->getPublicAccountId();
+            $publicAccountId = $syncArticlesDto->getAccountId();
             $articlesData = $syncArticlesDto->getArticles();
 
             // 步骤1: 验证或创建微信公众号基础数据
@@ -142,7 +142,7 @@ class WechatController extends AbstractController
             }
 
             // 设置公众号ID到DTO
-            $syncWechatDto->setPublicAccountId($publicAccountId);
+            $syncWechatDto->setAccountId($publicAccountId);
 
             $account = $this->accountRepository->find($publicAccountId);
             if (!$account) {
@@ -245,15 +245,33 @@ class WechatController extends AbstractController
     }
 
     #[Route('/sync', name: 'api_wechat_sync', methods: ['POST'])]
-    public function sync(SyncWechatDto $syncWechatDto): JsonResponse
+    public function sync(Request $request, ValidatorInterface $validator): JsonResponse
     {
+        // 添加调试日志
+        error_log('[DEBUG] 微信同步接口被调用');
+
+        // 手动解析JSON请求体
+        $rawData = json_decode($request->getContent(), true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            error_log('[DEBUG] JSON解析错误: ' . json_last_error_msg());
+            return $this->apiResponse->error('请求体格式错误: ' . json_last_error_msg(), Response::HTTP_BAD_REQUEST);
+        }
+
+        error_log('[DEBUG] 请求体原始数据: ' . $request->getContent());
+
+        // 手动创建SyncWechatDto实例
+        $syncWechatDto = new SyncWechatDto($rawData);
+
+        error_log('[DEBUG] DTO中的accountId: ' . var_export($syncWechatDto->getAccountId(), true));
+
         try {
-            // DTO验证（Symfony自动验证）
-            $errors = $this->validator->validate($syncWechatDto);
+            // DTO验证（手动验证）
+            $errors = $validator->validate($syncWechatDto);
             if (count($errors) > 0) {
                 $errorMessages = [];
                 foreach ($errors as $error) {
                     $errorMessages[] = $error->getMessage();
+                    error_log('[DEBUG] 验证错误: ' . $error->getMessage() . ' - 字段: ' . $error->getPropertyPath());
                 }
                 return $this->apiResponse->error('验证失败: ' . implode(', ', $errorMessages), Response::HTTP_BAD_REQUEST);
             }
@@ -264,7 +282,7 @@ class WechatController extends AbstractController
                 return $this->apiResponse->error('数据验证失败: ' . $this->formatValidationErrors($validationErrors), Response::HTTP_BAD_REQUEST);
             }
 
-            $accountId = $syncWechatDto->getPublicAccountId();
+            $accountId = $syncWechatDto->getAccountId();
             $forceSync = $syncWechatDto->isForceSync();
 
             // 调用同步服务

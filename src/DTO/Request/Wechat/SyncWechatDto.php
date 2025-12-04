@@ -17,17 +17,18 @@ use OpenApi\Attributes as OA;
 class SyncWechatDto extends AbstractRequestDto
 {
     /**
-     * 公众号ID
+     * 公众号系统内部主键ID
      */
     #[Assert\NotBlank(message: '公众号ID不能为空')]
     #[Assert\Type(type: 'string', message: '公众号ID必须是字符串')]
     #[Assert\Length(max: 100, maxMessage: '公众号ID不能超过100个字符')]
     #[OA\Property(
-        description: '微信公众号ID',
+        description: '微信公众号系统内部主键ID',
         example: 'wx1234567890abcdef',
         maxLength: 100
     )]
-    protected string $publicAccountId = '';
+    protected string $accountId = '';
+
 
     /**
      * 同步类型
@@ -190,20 +191,20 @@ class SyncWechatDto extends AbstractRequestDto
      *
      * @return string
      */
-    public function getPublicAccountId(): string
+    public function getAccountId(): string
     {
-        return $this->publicAccountId;
+        return $this->accountId;
     }
 
     /**
      * 设置公众号ID
      *
-     * @param string $publicAccountId
+     * @param string $accountId
      * @return self
      */
-    public function setPublicAccountId(string $publicAccountId): self
+    public function setAccountId(string $accountId): self
     {
-        $this->publicAccountId = $this->cleanString($publicAccountId);
+        $this->accountId = $this->cleanString($accountId);
         return $this;
     }
 
@@ -515,7 +516,10 @@ class SyncWechatDto extends AbstractRequestDto
     public function populateFromData(array $data): self
     {
         if (isset($data['publicAccountId'])) {
-            $this->setPublicAccountId($data['publicAccountId']);
+            $this->setAccountId($data['publicAccountId']);
+        }
+        if (isset($data['accountId'])) {
+            $this->setAccountId($data['accountId']);
         }
 
         if (isset($data['syncType'])) {
@@ -581,7 +585,8 @@ class SyncWechatDto extends AbstractRequestDto
     public function toArray(): array
     {
         return array_merge(parent::toArray(), [
-            'publicAccountId' => $this->publicAccountId,
+            'publicAccountId' => $this->accountId,
+            'accountId' => $this->accountId,
             'syncType' => $this->syncType,
             'forceSync' => $this->forceSync,
             'syncScope' => $this->syncScope,
@@ -608,9 +613,9 @@ class SyncWechatDto extends AbstractRequestDto
         $errors = [];
 
         // 验证公众号ID
-        if (empty($this->publicAccountId)) {
+        if (empty($this->accountId)) {
             $errors['publicAccountId'] = '公众号ID不能为空';
-        } elseif (strlen($this->publicAccountId) > 100) {
+        } elseif (strlen($this->accountId) > 100) {
             $errors['publicAccountId'] = '公众号ID不能超过100个字符';
         }
 
@@ -648,7 +653,7 @@ class SyncWechatDto extends AbstractRequestDto
      */
     public function hasValidSyncData(): bool
     {
-        return !empty($this->publicAccountId);
+        return !empty($this->accountId);
     }
 
     /**
@@ -659,7 +664,7 @@ class SyncWechatDto extends AbstractRequestDto
     public function getSyncSummary(): array
     {
         return [
-            'publicAccountId' => $this->publicAccountId,
+            'publicAccountId' => $this->accountId,
             'syncType' => $this->syncType,
             'syncScope' => $this->syncScope,
             'forceSync' => $this->forceSync,

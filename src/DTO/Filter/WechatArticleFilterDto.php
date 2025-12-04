@@ -26,7 +26,7 @@ class WechatArticleFilterDto extends AbstractFilterDto
         example: 'wx1234567890abcdef',
         maxLength: 100
     )]
-    protected ?string $publicAccountId = null;
+    protected ?string $accountId = null;
 
     /**
      * 文章标题
@@ -245,9 +245,9 @@ class WechatArticleFilterDto extends AbstractFilterDto
      *
      * @return string|null
      */
-    public function getPublicAccountId(): ?string
+    public function getAccountId(): ?string
     {
-        return $this->publicAccountId;
+        return $this->accountId;
     }
 
     /**
@@ -256,9 +256,9 @@ class WechatArticleFilterDto extends AbstractFilterDto
      * @param string|null $publicAccountId
      * @return self
      */
-    public function setPublicAccountId(?string $publicAccountId): self
+    public function setAccountId(?string $accountId): self
     {
-        $this->publicAccountId = $this->cleanString($publicAccountId);
+        $this->accountId = $this->cleanString($accountId);
         return $this;
     }
 
@@ -631,7 +631,10 @@ class WechatArticleFilterDto extends AbstractFilterDto
     public function populateFromData(array $data): self
     {
         if (isset($data['publicAccountId'])) {
-            $this->setPublicAccountId($data['publicAccountId']);
+            $this->setAccountId($data['publicAccountId']);
+        }
+        if (isset($data['accountId'])) {
+            $this->setAccountId($data['accountId']);
         }
 
         if (isset($data['title'])) {
@@ -709,7 +712,7 @@ class WechatArticleFilterDto extends AbstractFilterDto
     public function toArray(): array
     {
         return array_merge(parent::toArray(), [
-            'publicAccountId' => $this->publicAccountId,
+            'publicAccountId' => $this->accountId,
             'title' => $this->title,
             'author' => $this->author,
             'category' => $this->category,
@@ -739,8 +742,8 @@ class WechatArticleFilterDto extends AbstractFilterDto
         $criteria = [];
 
         // 基础过滤条件
-        if ($this->publicAccountId) {
-            $criteria['publicAccountId'] = $this->publicAccountId;
+        if ($this->accountId) {
+            $criteria['publicAccountId'] = $this->accountId;
         }
 
         if ($this->title) {
@@ -871,7 +874,7 @@ class WechatArticleFilterDto extends AbstractFilterDto
      */
     public function hasValidFilterConditions(): bool
     {
-        return $this->publicAccountId !== null ||
+        return $this->accountId !== null ||
                $this->title !== null ||
                $this->author !== null ||
                $this->category !== null ||
@@ -899,7 +902,7 @@ class WechatArticleFilterDto extends AbstractFilterDto
     {
         return array_merge(parent::getFilterSummary(), [
             'wechatFilters' => [
-                'publicAccountId' => $this->publicAccountId,
+                'publicAccountId' => $this->accountId,
                 'title' => $this->title,
                 'author' => $this->author,
                 'category' => $this->category,

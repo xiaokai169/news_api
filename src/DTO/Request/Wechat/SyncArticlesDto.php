@@ -28,7 +28,7 @@ class SyncArticlesDto extends AbstractRequestDto
         example: 'wx1234567890abcdef',
         maxLength: 100
     )]
-    protected string $publicAccountId = '';
+    protected string $accountId = '';
 
     /**
      * 文章列表
@@ -224,9 +224,9 @@ class SyncArticlesDto extends AbstractRequestDto
      *
      * @return string
      */
-    public function getPublicAccountId(): string
+    public function getAccountId(): string
     {
-        return $this->publicAccountId;
+        return $this->accountId;
     }
 
     /**
@@ -235,9 +235,9 @@ class SyncArticlesDto extends AbstractRequestDto
      * @param string $publicAccountId
      * @return self
      */
-    public function setPublicAccountId(string $publicAccountId): self
+    public function setAccountId(string $accountId): self
     {
-        $this->publicAccountId = $this->cleanString($publicAccountId);
+        $this->accountId = $this->cleanString($accountId);
         return $this;
     }
 
@@ -425,7 +425,10 @@ class SyncArticlesDto extends AbstractRequestDto
     public function populateFromData(array $data): self
     {
         if (isset($data['publicAccountId'])) {
-            $this->setPublicAccountId($data['publicAccountId']);
+            $this->setAccountId($data['publicAccountId']);
+        }
+        if (isset($data['accountId'])) {
+            $this->setAccountId($data['accountId']);
         }
 
         if (isset($data['articles']) && is_array($data['articles'])) {
@@ -472,7 +475,7 @@ class SyncArticlesDto extends AbstractRequestDto
         }
 
         return array_merge(parent::toArray(), [
-            'publicAccountId' => $this->publicAccountId,
+            'publicAccountId' => $this->accountId,
             'articles' => $articlesArray,
             'syncType' => $this->syncType,
             'forceSync' => $this->forceSync,
@@ -493,9 +496,9 @@ class SyncArticlesDto extends AbstractRequestDto
         $errors = [];
 
         // 验证公众号ID
-        if (empty($this->publicAccountId)) {
+        if (empty($this->accountId)) {
             $errors['publicAccountId'] = '公众号ID不能为空';
-        } elseif (strlen($this->publicAccountId) > 100) {
+        } elseif (strlen($this->accountId) > 100) {
             $errors['publicAccountId'] = '公众号ID不能超过100个字符';
         }
 
@@ -532,7 +535,7 @@ class SyncArticlesDto extends AbstractRequestDto
      */
     public function hasValidSyncData(): bool
     {
-        if (empty($this->publicAccountId) || empty($this->articles)) {
+        if (empty($this->accountId) || empty($this->articles)) {
             return false;
         }
 
@@ -569,7 +572,7 @@ class SyncArticlesDto extends AbstractRequestDto
     public function getSyncSummary(): array
     {
         return [
-            'publicAccountId' => $this->publicAccountId,
+            'publicAccountId' => $this->accountId,
             'syncType' => $this->syncType,
             'forceSync' => $this->forceSync,
             'autoPublish' => $this->autoPublish,
