@@ -45,7 +45,11 @@ class WechatApiService
             $result = json_decode($response->getContent(), true);
 
             if (isset($result['errcode']) && $result['errcode'] !== 0) {
-                $this->logger->error('获取access_token返回错误: ' . $result['errmsg']);
+                $appId = $account->getAppId();
+                $appSecret = $account->getAppSecret();
+                $this->logger->error('获取access_token返回错误: ' . $result['errmsg'] .
+                    ', appid: ' . $appId .
+                    ', secret: ' . substr($appSecret, 0, 8) . '***');
                 return null;
             }
 
