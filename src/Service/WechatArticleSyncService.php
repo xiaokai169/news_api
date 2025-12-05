@@ -72,23 +72,23 @@ class WechatArticleSyncService
                 return $result;
             }
 
-            // 批量获取文章列表 - 只获取永久素材库中的历史发布文章
-            $materialItems = $this->wechatApiService->getAllArticles($accessToken);
+            // 批量获取已发布消息列表 - 获取公众号已发布的文章
+            $publishedItems = $this->wechatApiService->getAllPublishedArticles($accessToken, 20, 0);
 
-            if (empty($materialItems)) {
+            if (empty($publishedItems)) {
                 $result['message'] = '没有获取到历史发布文章';
                 $result['success'] = true;
                 return $result;
             }
 
-            $result['stats']['total'] = count($materialItems);
+            $result['stats']['total'] = count($publishedItems);
             $this->logger->info(sprintf(
-                '获取到历史发布文章：%d 篇',
-                count($materialItems)
+                '获取到已发布消息：%d 篇',
+                count($publishedItems)
             ));
 
             // 提取文章数据
-            $articles = $this->wechatApiService->extractAllArticles($materialItems);
+            $articles = $this->wechatApiService->extractAllPublishedArticles($publishedItems);
 
             // 处理每篇文章
             foreach ($articles as $articleData) {
@@ -141,9 +141,18 @@ class WechatArticleSyncService
         $result = ['status' => 'skipped'];
 
         try {
-            // 检查文章是否已存在（基于原始URL）
+            // 检查文章是否已存在（基于原始URL或文章ID）
             $originalUrl = $articleData['content_source_url'] ?? $articleData['url'] ?? '';
-            $existingArticle = $this->officialRepository->findOneBy(['originalUrl' => $originalUrl]);
+            $articleId = $articleData['article_id'] ?? '';
+
+            // 优先使用article_id进行去重，如果没有则使用URL
+            $existingArticle = null;
+            if ($articleId) {
+                $existingArticle = $this->officialRepository->findOneBy(['articleId' => $articleId]);
+            }
+            if (!$existingArticle && $originalUrl) {
+                $existingArticle = $this->officialRepository->findOneBy(['originalUrl' => $originalUrl]);
+            }
 
             // 如果强制同步或者文章不存在，则处理
             if ($forceSync || !$existingArticle) {
@@ -198,11 +207,15 @@ class WechatArticleSyncService
         $article->setTitleImg($coverUrl ?? '');
         $article->setOriginalUrl($articleData['content_source_url'] ?? $articleData['url'] ?? '');
 
-        // 设置发布时间
-        if (isset($articleData['update_time'])) {
-            $releaseTime = (new \DateTime())->setTimestamp($articleData['update_time']);
-            $article->setReleaseTime($releaseTime->format('Y-m-d H:i:s'));
+        // 设置文章ID（如果有）
+        if (isset($articleData['article_id'])) {
+            $article->setArticleId($articleData['article_id']);
         }
+
+        // 设置发布时间（优先使用publish_time，其次使用update_time）
+        $timestamp = $articleData['publish_time'] ?? $articleData['update_time'] ?? time();
+        $releaseTime = (new \DateTime())->setTimestamp($timestamp);
+        $article->setReleaseTime($releaseTime->format('Y-m-d H:i:s'));
 
         // 设置状态为激活
         $article->setStatus(1);
@@ -231,11 +244,15 @@ class WechatArticleSyncService
             $article->setTitleImg($coverUrl);
         }
 
-        // 更新发布时间
-        if (isset($articleData['update_time'])) {
-            $releaseTime = (new \DateTime())->setTimestamp($articleData['update_time']);
-            $article->setReleaseTime($releaseTime->format('Y-m-d H:i:s'));
+        // 更新文章ID（如果有）
+        if (isset($articleData['article_id'])) {
+            $article->setArticleId($articleData['article_id']);
         }
+
+        // 更新发布时间（优先使用publish_time，其次使用update_time）
+        $timestamp = $articleData['publish_time'] ?? $articleData['update_time'] ?? time();
+        $releaseTime = (new \DateTime())->setTimestamp($timestamp);
+        $article->setReleaseTime($releaseTime->format('Y-m-d H:i:s'));
 
         // 更新分类为固定分类ID 18 (GZH_001)
         $category = $this->entityManager->getRepository(\App\Entity\SysNewsArticleCategory::class)->find(18);
