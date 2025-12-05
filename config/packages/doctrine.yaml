@@ -21,8 +21,6 @@ doctrine:
         #server_version: '16'
 
     orm:
-        auto_generate_proxy_classes: true
-        enable_lazy_ghost_objects: true
         default_entity_manager: default  # 修复：将默认实体管理器设置为默认连接，解决500错误
         entity_managers:
             default:
@@ -67,8 +65,6 @@ when@test:
 when@prod:
     doctrine:
         orm:
-            auto_generate_proxy_classes: false
-            proxy_dir: "%kernel.build_dir%/doctrine/orm/Proxies"
             entity_managers:
                 default:
                     query_cache_driver:
