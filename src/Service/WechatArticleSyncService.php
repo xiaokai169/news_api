@@ -120,7 +120,7 @@ class WechatArticleSyncService
                 $result['stats']['skipped'],
                 $result['stats']['failed']
             );
-
+            $this->logger->info('同步的数据=====================',[$articleData]);
         } catch (\Exception $e) {
             $result['message'] = '同步过程中发生异常: ' . $e->getMessage();
             $result['errors'][] = $e->getMessage();
