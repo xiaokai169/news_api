@@ -7,56 +7,52 @@ monolog:
         - 'performance'
 
     handlers:
-        # 主日志处理器 - 写入文件
+        # 默认处理器配置（会被环境特定配置覆盖）
         main:
             type: stream
             path: "%kernel.logs_dir%/%kernel.environment%.log"
             level: debug
             channels: ["!event", "!wechat", "!api", "!database", "!performance"]
 
-        # 微信API专用日志
         wechat:
             type: stream
             path: "%kernel.logs_dir%/wechat.log"
             level: info
             channels: ["wechat"]
 
-        # API请求日志
         api:
             type: stream
             path: "%kernel.logs_dir%/api.log"
             level: info
             channels: ["api"]
 
-        # 数据库操作日志
         database:
             type: stream
             path: "%kernel.logs_dir%/database.log"
             level: debug
             channels: ["database"]
 
-        # 性能监控日志
         performance:
             type: stream
             path: "%kernel.logs_dir%/performance.log"
             level: info
             channels: ["performance"]
 
-        # 错误日志单独处理
         error:
             type: stream
             path: "%kernel.logs_dir%/error.log"
             level: error
             channels: ["!event"]
 
-        # 控制台输出（开发环境）
         console:
             type: console
             process_psr_3_messages: false
             channels: ["!event", "!doctrine"]
 
-        # 生产环境额外配置
-        when@prod:
+# 生产环境配置
+when@prod:
+    monolog:
+        handlers:
             main:
                 type: rotating_file
                 path: "%kernel.logs_dir%/%kernel.environment%.log"
@@ -64,7 +60,6 @@ monolog:
                 max_files: 30
                 channels: ["!event", "!wechat", "!api", "!database", "!performance"]
 
-            # 生产环境微信API日志
             wechat:
                 type: rotating_file
                 path: "%kernel.logs_dir%/wechat.log"
@@ -72,7 +67,6 @@ monolog:
                 max_files: 15
                 channels: ["wechat"]
 
-            # 生产环境API日志
             api:
                 type: rotating_file
                 path: "%kernel.logs_dir%/api.log"
@@ -80,7 +74,20 @@ monolog:
                 max_files: 15
                 channels: ["api"]
 
-            # 生产环境错误日志
+            database:
+                type: rotating_file
+                path: "%kernel.logs_dir%/database.log"
+                level: info
+                max_files: 15
+                channels: ["database"]
+
+            performance:
+                type: rotating_file
+                path: "%kernel.logs_dir%/performance.log"
+                level: info
+                max_files: 15
+                channels: ["performance"]
+
             error:
                 type: rotating_file
                 path: "%kernel.logs_dir%/error.log"
@@ -88,38 +95,42 @@ monolog:
                 max_files: 30
                 channels: ["!event"]
 
-        # 开发环境配置
-        when@dev:
+# 开发环境配置
+when@dev:
+    monolog:
+        handlers:
             main:
                 type: stream
                 path: "%kernel.logs_dir%/%kernel.environment%.log"
                 level: debug
                 channels: ["!event", "!wechat", "!api", "!database", "!performance"]
 
-            # 开发环境微信API详细日志
             wechat:
                 type: stream
                 path: "%kernel.logs_dir%/wechat.log"
                 level: debug
                 channels: ["wechat"]
 
-            # 开发环境API详细日志
             api:
                 type: stream
                 path: "%kernel.logs_dir%/api.log"
                 level: debug
                 channels: ["api"]
 
-            # 开发环境数据库详细日志
             database:
                 type: stream
                 path: "%kernel.logs_dir%/database.log"
                 level: debug
                 channels: ["database"]
 
-            # 开发环境性能日志
             performance:
                 type: stream
                 path: "%kernel.logs_dir%/performance.log"
                 level: debug
                 channels: ["performance"]
+
+            error:
+                type: stream
+                path: "%kernel.logs_dir%/error.log"
+                level: error
+                channels: ["!event"]
