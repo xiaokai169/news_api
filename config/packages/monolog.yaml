@@ -57,71 +57,69 @@ monolog:
 
         # 生产环境额外配置
         when@prod:
-            handlers:
-                main:
-                    type: rotating_file
-                    path: "%kernel.logs_dir%/%kernel.environment%.log"
-                    level: warning
-                    max_files: 30
-                    channels: ["!event", "!wechat", "!api", "!database", "!performance"]
+            main:
+                type: rotating_file
+                path: "%kernel.logs_dir%/%kernel.environment%.log"
+                level: warning
+                max_files: 30
+                channels: ["!event", "!wechat", "!api", "!database", "!performance"]
 
-                # 生产环境微信API日志
-                wechat:
-                    type: rotating_file
-                    path: "%kernel.logs_dir%/wechat.log"
-                    level: info
-                    max_files: 15
-                    channels: ["wechat"]
+            # 生产环境微信API日志
+            wechat:
+                type: rotating_file
+                path: "%kernel.logs_dir%/wechat.log"
+                level: info
+                max_files: 15
+                channels: ["wechat"]
 
-                # 生产环境API日志
-                api:
-                    type: rotating_file
-                    path: "%kernel.logs_dir%/api.log"
-                    level: warning
-                    max_files: 15
-                    channels: ["api"]
+            # 生产环境API日志
+            api:
+                type: rotating_file
+                path: "%kernel.logs_dir%/api.log"
+                level: warning
+                max_files: 15
+                channels: ["api"]
 
-                # 生产环境错误日志
-                error:
-                    type: rotating_file
-                    path: "%kernel.logs_dir%/error.log"
-                    level: error
-                    max_files: 30
-                    channels: ["!event"]
+            # 生产环境错误日志
+            error:
+                type: rotating_file
+                path: "%kernel.logs_dir%/error.log"
+                level: error
+                max_files: 30
+                channels: ["!event"]
 
         # 开发环境配置
         when@dev:
-            handlers:
-                main:
-                    type: stream
-                    path: "%kernel.logs_dir%/%kernel.environment%.log"
-                    level: debug
-                    channels: ["!event", "!wechat", "!api", "!database", "!performance"]
+            main:
+                type: stream
+                path: "%kernel.logs_dir%/%kernel.environment%.log"
+                level: debug
+                channels: ["!event", "!wechat", "!api", "!database", "!performance"]
 
-                # 开发环境微信API详细日志
-                wechat:
-                    type: stream
-                    path: "%kernel.logs_dir%/wechat.log"
-                    level: debug
-                    channels: ["wechat"]
+            # 开发环境微信API详细日志
+            wechat:
+                type: stream
+                path: "%kernel.logs_dir%/wechat.log"
+                level: debug
+                channels: ["wechat"]
 
-                # 开发环境API详细日志
-                api:
-                    type: stream
-                    path: "%kernel.logs_dir%/api.log"
-                    level: debug
-                    channels: ["api"]
+            # 开发环境API详细日志
+            api:
+                type: stream
+                path: "%kernel.logs_dir%/api.log"
+                level: debug
+                channels: ["api"]
 
-                # 开发环境数据库详细日志
-                database:
-                    type: stream
-                    path: "%kernel.logs_dir%/database.log"
-                    level: debug
-                    channels: ["database"]
+            # 开发环境数据库详细日志
+            database:
+                type: stream
+                path: "%kernel.logs_dir%/database.log"
+                level: debug
+                channels: ["database"]
 
-                # 开发环境性能日志
-                performance:
-                    type: stream
-                    path: "%kernel.logs_dir%/performance.log"
-                    level: debug
-                    channels: ["performance"]
+            # 开发环境性能日志
+            performance:
+                type: stream
+                path: "%kernel.logs_dir%/performance.log"
+                level: debug
+                channels: ["performance"]
