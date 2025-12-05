@@ -14,7 +14,7 @@ echo "=== 微信公众号API修复验证 ===\n\n";
 try {
     // 1. 验证数据库表存在
     echo "1. 🔍 验证数据库表...\n";
-    $pdo = new PDO("mysql:host=127.0.0.1;port=3306;dbname=official_website", 'root', 'qwe147258..');
+    $pdo = new PDO("mysql:host=127.0.0.1;port=3306;dbname=official_website", 'official_website', 'feye8wTefxRk7pBs');
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     $stmt = $pdo->prepare("SHOW TABLES LIKE 'wechat_public_account'");
