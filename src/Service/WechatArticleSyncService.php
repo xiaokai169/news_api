@@ -141,23 +141,39 @@ class WechatArticleSyncService
         $result = ['status' => 'skipped'];
 
         try {
+            // 添加调试日志
+            $this->logger->info('开始处理文章: ' . ($articleData['title'] ?? '未知标题'));
+            $this->logger->info('文章数据: ' . json_encode($articleData));
+
             // 检查文章是否已存在（基于原始URL或文章ID）
             $originalUrl = $articleData['content_source_url'] ?? $articleData['url'] ?? '';
             $articleId = $articleData['article_id'] ?? '';
+
+            $this->logger->info("检查文章存在性 - articleId: {$articleId}, originalUrl: {$originalUrl}");
 
             // 优先使用article_id进行去重，如果没有则使用URL
             $existingArticle = null;
             if ($articleId) {
                 $existingArticle = $this->officialRepository->findOneBy(['articleId' => $articleId]);
+                $this->logger->info("通过articleId查找结果: " . ($existingArticle ? '存在' : '不存在'));
             }
             if (!$existingArticle && $originalUrl) {
                 $existingArticle = $this->officialRepository->findOneBy(['originalUrl' => $originalUrl]);
+                $this->logger->info("通过originalUrl查找结果: " . ($existingArticle ? '存在' : '不存在'));
             }
 
             // 如果强制同步或者文章不存在，则处理
             if ($forceSync || !$existingArticle) {
+                $this->logger->info("准备处理文章 - forceSync: " . ($forceSync ? 'true' : 'false') . ", existingArticle: " . ($existingArticle ? '存在' : '不存在'));
+
                 // 提取图片URL
-                $content = $articleData['content'] ?? '';
+                $content = $articleData['content'] ?? $articleData['digest'] ?? '';
+                if (empty($content)) {
+                    $content = $articleData['title'] ?? ''; // 如果内容为空，使用标题作为内容
+                }
+
+                $this->logger->info("处理内容长度: " . strlen($content));
+
                 $imageUrls = $this->imageUploadService->extractImageUrls($content);
 
                 // 上传图片并获取URL映射
@@ -175,21 +191,25 @@ class WechatArticleSyncService
 
                 if ($existingArticle) {
                     // 更新现有文章
+                    $this->logger->info("更新现有文章: " . $existingArticle->getTitle());
                     $this->updateArticle($existingArticle, $articleData, $processedContent, $processedCoverUrl);
                     $result['status'] = 'updated';
                 } else {
                     // 创建新文章
+                    $this->logger->info("创建新文章: " . ($articleData['title'] ?? '未知'));
                     $this->createArticle($account, $articleData, $processedContent, $processedCoverUrl);
                     $result['status'] = 'created';
                 }
             } else {
                 $result['status'] = 'skipped';
+                $this->logger->info("文章已存在，跳过: " . ($articleData['title'] ?? '未知'));
             }
 
         } catch (\Exception $e) {
             $result['status'] = 'failed';
             $result['error'] = '处理文章失败: ' . $e->getMessage() . ' - 文章标题: ' . ($articleData['title'] ?? '未知');
             $this->logger->error($result['error']);
+            $this->logger->error('异常堆栈: ' . $e->getTraceAsString());
         }
 
         return $result;
@@ -202,8 +222,16 @@ class WechatArticleSyncService
     {
         $article = new Official();
 
-        $article->setTitle($articleData['title'] ?? '');
-        $article->setContent($processedContent);
+        $title = $articleData['title'] ?? '';
+        $content = $processedContent ?: ($articleData['digest'] ?? $title);
+
+        // 确保内容不为空
+        if (empty($content)) {
+            $content = $title . ' - [内容为空]';
+        }
+
+        $article->setTitle($title);
+        $article->setContent($content);
         $article->setTitleImg($coverUrl ?? '');
         $article->setOriginalUrl($articleData['content_source_url'] ?? $articleData['url'] ?? '');
 
@@ -229,7 +257,7 @@ class WechatArticleSyncService
         $this->entityManager->persist($article);
         $this->entityManager->flush();
 
-        $this->logger->info('创建文章成功: ' . $article->getTitle());
+        $this->logger->info('创建文章成功: ' . $article->getTitle() . ' (ID: ' . $article->getId() . ')');
     }
 
     /**
