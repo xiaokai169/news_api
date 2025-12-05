@@ -56,8 +56,8 @@ class ComprehensiveWechatApiTest
      */
     public function runAllTests(): array
     {
-        echo "=== 微信API综合连接测试开始 ===\n";
-        echo "测试时间: " . date('Y-m-d H:i:s') . "\n\n";
+        echo "=== 微信API综合连接测试开始 ===<br>\n";
+        echo "测试时间: " . date('Y-m-d H:i:s') . "<br><br>\n";
 
         // 1. 网络连接测试
         $this->testNetworkConnectivity();
@@ -92,7 +92,7 @@ class ComprehensiveWechatApiTest
      */
     private function testNetworkConnectivity(): void
     {
-        echo "1. 测试网络连接...\n";
+        echo "1. 测试网络连接...<br>\n";
 
         $endpoints = [
             'api.weixin.qq.com' => '微信API服务器',
@@ -119,7 +119,7 @@ class ComprehensiveWechatApiTest
                     'error' => null
                 ];
 
-                echo "   ✓ {$description} ({$host}): {$statusCode} - {$responseTime}ms\n";
+                echo "   ✓ {$description} ({$host}): {$statusCode} - {$responseTime}ms<br>\n";
 
             } catch (TransportExceptionInterface $e) {
                 $responseTime = round((microtime(true) - $startTime) * 1000, 2);
@@ -131,10 +131,10 @@ class ComprehensiveWechatApiTest
                     'error' => $e->getMessage()
                 ];
 
-                echo "   ✗ {$description} ({$host}): 连接失败 - {$e->getMessage()}\n";
+                echo "   ✗ {$description} ({$host}): 连接失败 - {$e->getMessage()}<br>\n";
             }
         }
-        echo "\n";
+        echo "<br>\n";
     }
 
     /**
@@ -142,7 +142,7 @@ class ComprehensiveWechatApiTest
      */
     private function testDnsResolution(): void
     {
-        echo "2. 测试DNS解析...\n";
+        echo "2. 测试DNS解析...<br>\n";
 
         $hosts = [
             'api.weixin.qq.com',
@@ -169,7 +169,7 @@ class ComprehensiveWechatApiTest
                         'error' => null
                     ];
 
-                    echo "   ✓ {$host}: " . implode(', ', $ipAddresses) . " - {$resolutionTime}ms\n";
+                    echo "   ✓ {$host}: " . implode(', ', $ipAddresses) . " - {$resolutionTime}ms<br>\n";
                 } else {
                     $this->testResults['dns_resolution'][$host] = [
                         'status' => 'FAILED',
@@ -178,7 +178,7 @@ class ComprehensiveWechatApiTest
                         'error' => 'No DNS records found'
                     ];
 
-                    echo "   ✗ {$host}: 无DNS记录 - {$resolutionTime}ms\n";
+                    echo "   ✗ {$host}: 无DNS记录 - {$resolutionTime}ms<br>\n";
                 }
 
             } catch (Exception $e) {
@@ -190,10 +190,10 @@ class ComprehensiveWechatApiTest
                     'error' => $e->getMessage()
                 ];
 
-                echo "   ✗ {$host}: DNS解析失败 - {$e->getMessage()}\n";
+                echo "   ✗ {$host}: DNS解析失败 - {$e->getMessage()}<br>\n";
             }
         }
-        echo "\n";
+        echo "<br>\n";
     }
 
     /**
@@ -201,7 +201,7 @@ class ComprehensiveWechatApiTest
      */
     private function testSslCertificates(): void
     {
-        echo "3. 测试SSL证书...\n";
+        echo "3. 测试SSL证书...<br>\n";
 
         $hosts = [
             'api.weixin.qq.com',
@@ -249,11 +249,11 @@ class ComprehensiveWechatApiTest
                         'error' => null
                     ];
 
-                    echo "   ✓ {$host}: {$subject} (颁发者: {$issuer})\n";
-                    echo "     有效期: {$validFrom} 至 {$validTo}\n";
+                    echo "   ✓ {$host}: {$subject} (颁发者: {$issuer})<br>\n";
+                    echo "     有效期: {$validFrom} 至 {$validTo}<br>\n";
 
                     if (!$isValid) {
-                        echo "     ⚠️ 证书已过期\n";
+                        echo "     ⚠️ 证书已过期<br>\n";
                     }
 
                     fclose($stream);
@@ -268,7 +268,7 @@ class ComprehensiveWechatApiTest
                         'error' => $errstr
                     ];
 
-                    echo "   ✗ {$host}: SSL连接失败 - {$errstr}\n";
+                    echo "   ✗ {$host}: SSL连接失败 - {$errstr}<br>\n";
                 }
 
             } catch (Exception $e) {
@@ -282,10 +282,10 @@ class ComprehensiveWechatApiTest
                     'error' => $e->getMessage()
                 ];
 
-                echo "   ✗ {$host}: SSL证书检查失败 - {$e->getMessage()}\n";
+                echo "   ✗ {$host}: SSL证书检查失败 - {$e->getMessage()}<br>\n";
             }
         }
-        echo "\n";
+        echo "<br>\n";
     }
 
     /**
@@ -293,10 +293,10 @@ class ComprehensiveWechatApiTest
      */
     private function testAccessTokenRetrieval(): void
     {
-        echo "4. 测试Access Token获取...\n";
+        echo "4. 测试Access Token获取...<br>\n";
 
         foreach ($this->testAccounts as $account) {
-            echo "   测试账号: {$account['name']} (AppID: {$account['app_id']})\n";
+            echo "   测试账号: {$account['name']} (AppID: {$account['app_id']})<br>\n";
 
             $startTime = microtime(true);
 
@@ -324,8 +324,8 @@ class ComprehensiveWechatApiTest
                         'full_response' => $result
                     ];
 
-                    echo "     ✓ Access Token获取成功 - {$responseTime}ms\n";
-                    echo "       Token有效期: " . ($result['expires_in'] ?? 'N/A') . " 秒\n";
+                    echo "     ✓ Access Token获取成功 - {$responseTime}ms<br>\n";
+                    echo "       Token有效期: " . ($result['expires_in'] ?? 'N/A') . " 秒<br>\n";
 
                 } else {
                     $errorCode = $result['errcode'] ?? 'UNKNOWN';
@@ -340,9 +340,9 @@ class ComprehensiveWechatApiTest
                         'full_response' => $result
                     ];
 
-                    echo "     ✗ Access Token获取失败 - {$responseTime}ms\n";
-                    echo "       错误码: {$errorCode}\n";
-                    echo "       错误信息: {$errorMessage}\n";
+                    echo "     ✗ Access Token获取失败 - {$responseTime}ms<br>\n";
+                    echo "       错误码: {$errorCode}<br>\n";
+                    echo "       错误信息: {$errorMessage}<br>\n";
                 }
 
             } catch (TransportExceptionInterface $e) {
@@ -357,11 +357,11 @@ class ComprehensiveWechatApiTest
                     'full_response' => null
                 ];
 
-                echo "     ✗ Access Token获取网络错误 - {$responseTime}ms\n";
-                echo "       错误信息: {$e->getMessage()}\n";
+                echo "     ✗ Access Token获取网络错误 - {$responseTime}ms<br>\n";
+                echo "       错误信息: {$e->getMessage()}<br>\n";
             }
         }
-        echo "\n";
+        echo "<br>\n";
     }
 
     /**
@@ -369,7 +369,7 @@ class ComprehensiveWechatApiTest
      */
     private function testApiEndpoints(): void
     {
-        echo "5. 测试API端点连接...\n";
+        echo "5. 测试API端点连接...<br>\n";
 
         // 使用第一个成功获取的token进行测试
         $validToken = null;
@@ -381,7 +381,7 @@ class ComprehensiveWechatApiTest
         }
 
         if (!$validToken) {
-            echo "   ⚠️ 没有可用的Access Token，跳过API端点测试\n\n";
+            echo "   ⚠️ 没有可用的Access Token，跳过API端点测试<br><br>\n";
             return;
         }
 
@@ -418,7 +418,7 @@ class ComprehensiveWechatApiTest
         ];
 
         foreach ($endpoints as $endpoint) {
-            echo "   测试端点: {$endpoint['name']}\n";
+            echo "   测试端点: {$endpoint['name']}<br>\n";
 
             $startTime = microtime(true);
 
@@ -447,7 +447,7 @@ class ComprehensiveWechatApiTest
                         'response_summary' => $this->summarizeResponse($result)
                     ];
 
-                    echo "     ✓ {$endpoint['name']} - {$statusCode} - {$responseTime}ms\n";
+                    echo "     ✓ {$endpoint['name']} - {$statusCode} - {$responseTime}ms<br>\n";
                 } else {
                     $errorCode = $result['errcode'] ?? 'UNKNOWN';
                     $errorMessage = $result['errmsg'] ?? 'Unknown error';
@@ -460,9 +460,9 @@ class ComprehensiveWechatApiTest
                         'response_summary' => $result
                     ];
 
-                    echo "     ✗ {$endpoint['name']} - {$statusCode} - {$responseTime}ms\n";
-                    echo "       错误码: {$errorCode}\n";
-                    echo "       错误信息: {$errorMessage}\n";
+                    echo "     ✗ {$endpoint['name']} - {$statusCode} - {$responseTime}ms<br>\n";
+                    echo "       错误码: {$errorCode}<br>\n";
+                    echo "       错误信息: {$errorMessage}<br>\n";
                 }
 
             } catch (TransportExceptionInterface $e) {
@@ -476,11 +476,11 @@ class ComprehensiveWechatApiTest
                     'response_summary' => null
                 ];
 
-                echo "     ✗ {$endpoint['name']} - 网络错误 - {$responseTime}ms\n";
-                echo "       错误信息: {$e->getMessage()}\n";
+                echo "     ✗ {$endpoint['name']} - 网络错误 - {$responseTime}ms<br>\n";
+                echo "       错误信息: {$e->getMessage()}<br>\n";
             }
         }
-        echo "\n";
+        echo "<br>\n";
     }
 
     /**
@@ -488,7 +488,7 @@ class ComprehensiveWechatApiTest
      */
     private function testApiPermissions(): void
     {
-        echo "6. 测试API权限配置...\n";
+        echo "6. 测试API权限配置...<br>\n";
 
         $validToken = null;
         foreach ($this->testResults['access_token'] ?? [] as $appId => $result) {
@@ -499,7 +499,7 @@ class ComprehensiveWechatApiTest
         }
 
         if (!$validToken) {
-            echo "   ⚠️ 没有可用的Access Token，跳过权限测试\n\n";
+            echo "   ⚠️ 没有可用的Access Token，跳过权限测试<br><br>\n";
             return;
         }
 
@@ -517,13 +517,13 @@ class ComprehensiveWechatApiTest
             ],
             [
                 'name' => '获取公众号信息',
-                'url' => self::WECHAT_API_BASE . '/cgi-bin/account/getaccountbasicinfo',
+                'url' => self::WECHAT_API_BASE . '/account/getaccountbasicinfo',
                 'permission' => '账号信息权限'
             ]
         ];
 
         foreach ($permissionTests as $test) {
-            echo "   测试权限: {$test['name']}\n";
+            echo "   测试权限: {$test['name']}<br>\n";
 
             $startTime = microtime(true);
 
@@ -562,9 +562,9 @@ class ComprehensiveWechatApiTest
                 ];
 
                 $icon = ($status === 'GRANTED') ? '✓' : (($status === 'DENIED') ? '✗' : '?');
-                echo "     {$icon} {$test['name']}: {$message}\n";
+                echo "     {$icon} {$test['name']}: {$message}<br>\n";
                 if ($errorCode !== 0) {
-                    echo "       错误码: {$errorCode}, 错误信息: {$errorMessage}\n";
+                    echo "       错误码: {$errorCode}, 错误信息: {$errorMessage}<br>\n";
                 }
 
             } catch (TransportExceptionInterface $e) {
@@ -579,10 +579,10 @@ class ComprehensiveWechatApiTest
                     'details' => '网络错误'
                 ];
 
-                echo "     ✗ {$test['name']}: 网络错误 - {$e->getMessage()}\n";
+                echo "     ✗ {$test['name']}: 网络错误 - {$e->getMessage()}<br>\n";
             }
         }
-        echo "\n";
+        echo "<br>\n";
     }
 
     /**
@@ -590,11 +590,11 @@ class ComprehensiveWechatApiTest
      */
     private function testIpWhitelist(): void
     {
-        echo "7. 测试IP白名单配置...\n";
+        echo "7. 测试IP白名单配置...<br>\n";
 
         // 获取当前服务器的外网IP
         $currentIp = $this->getServerPublicIp();
-        echo "   当前服务器外网IP: {$currentIp}\n";
+        echo "   当前服务器外网IP: {$currentIp}<br>\n";
 
         $validToken = null;
         foreach ($this->testResults['access_token'] ?? [] as $appId => $result) {
@@ -605,7 +605,7 @@ class ComprehensiveWechatApiTest
         }
 
         if (!$validToken) {
-            echo "   ⚠️ 没有可用的Access Token，无法测试IP白名单\n\n";
+            echo "   ⚠️ 没有可用的Access Token，无法测试IP白名单<br><br>\n";
             return;
         }
 
@@ -633,8 +633,8 @@ class ComprehensiveWechatApiTest
                     'note' => '当前IP可以访问微信API，可能已在白名单中'
                 ];
 
-                echo "   ✓ IP白名单检查通过 - {$responseTime}ms\n";
-                echo "     微信服务器IP列表: " . implode(', ', array_slice($result['ip_list'], 0, 5)) . "...\n";
+                echo "   ✓ IP白名单检查通过 - {$responseTime}ms<br>\n";
+                echo "     微信服务器IP列表: " . implode(', ', array_slice($result['ip_list'], 0, 5)) . "...<br>\n";
 
             } else {
                 $errorCode = $result['errcode'] ?? 'UNKNOWN';
@@ -649,8 +649,8 @@ class ComprehensiveWechatApiTest
                     'note' => null
                 ];
 
-                echo "   ✗ IP白名单检查失败 - {$responseTime}ms\n";
-                echo "     错误码: {$errorCode}, 错误信息: {$errorMessage}\n";
+                echo "   ✗ IP白名单检查失败 - {$responseTime}ms<br>\n";
+                echo "     错误码: {$errorCode}, 错误信息: {$errorMessage}<br>\n";
             }
 
         } catch (TransportExceptionInterface $e) {
@@ -665,10 +665,10 @@ class ComprehensiveWechatApiTest
                 'note' => null
             ];
 
-            echo "   ✗ IP白名单检查网络错误 - {$responseTime}ms\n";
-            echo "     错误信息: {$e->getMessage()}\n";
+            echo "   ✗ IP白名单检查网络错误 - {$responseTime}ms<br>\n";
+            echo "     错误信息: {$e->getMessage()}<br>\n";
         }
-        echo "\n";
+        echo "<br>\n";
     }
 
     /**
@@ -676,7 +676,7 @@ class ComprehensiveWechatApiTest
      */
     private function testRateLimiting(): void
     {
-        echo "8. 测试API频率限制...\n";
+        echo "8. 测试API频率限制...<br>\n";
 
         $validToken = null;
         foreach ($this->testResults['access_token'] ?? [] as $appId => $result) {
@@ -687,7 +687,7 @@ class ComprehensiveWechatApiTest
         }
 
         if (!$validToken) {
-            echo "   ⚠️ 没有可用的Access Token，跳过频率限制测试\n\n";
+            echo "   ⚠️ 没有可用的Access Token，跳过频率限制测试<br><br>\n";
             return;
         }
 
@@ -697,7 +697,7 @@ class ComprehensiveWechatApiTest
         $rateLimitHits = 0;
         $totalTime = 0;
 
-        echo "   快速连续调用API {$callCount} 次...\n";
+        echo "   快速连续调用API {$callCount} 次...<br>\n";
 
         for ($i = 1; $i <= $callCount; $i++) {
             $startTime = microtime(true);
@@ -716,7 +716,7 @@ class ComprehensiveWechatApiTest
 
                 if ($statusCode === 200 && (!isset($result['errcode']) || $result['errcode'] === 0)) {
                     $successCount++;
-                    echo "     调用 {$i}: ✓ 成功 - {$responseTime}ms\n";
+                    echo "     调用 {$i}: ✓ 成功 - {$responseTime}ms<br>\n";
                 } else {
                     $errorCode = $result['errcode'] ?? 'UNKNOWN';
                     $errorMessage = $result['errmsg'] ?? 'Unknown error';
@@ -724,16 +724,16 @@ class ComprehensiveWechatApiTest
                     // 检查是否为频率限制错误
                     if (in_array($errorCode, [45009, 45010, 10001, 10002])) {
                         $rateLimitHits++;
-                        echo "     调用 {$i}: ⚠️ 频率限制 - 错误码: {$errorCode}, {$responseTime}ms\n";
+                        echo "     调用 {$i}: ⚠️ 频率限制 - 错误码: {$errorCode}, {$responseTime}ms<br>\n";
                     } else {
-                        echo "     调用 {$i}: ✗ 其他错误 - 错误码: {$errorCode}, {$responseTime}ms\n";
+                        echo "     调用 {$i}: ✗ 其他错误 - 错误码: {$errorCode}, {$responseTime}ms<br>\n";
                     }
                 }
 
             } catch (TransportExceptionInterface $e) {
                 $responseTime = round((microtime(true) - $startTime) * 1000, 2);
                 $totalTime += $responseTime;
-                echo "     调用 {$i}: ✗ 网络错误 - {$responseTime}ms\n";
+                echo "     调用 {$i}: ✗ 网络错误 - {$responseTime}ms<br>\n";
             }
 
             // 短暂延迟
@@ -751,13 +751,13 @@ class ComprehensiveWechatApiTest
             'status' => $rateLimitHits > 0 ? 'RATE_LIMITED' : 'NORMAL'
         ];
 
-        echo "   频率限制测试结果:\n";
-        echo "     总调用次数: {$callCount}\n";
-        echo "     成功次数: {$successCount}\n";
-        echo "     频率限制次数: {$rateLimitHits}\n";
-        echo "     成功率: " . round(($successCount / $callCount) * 100, 2) . "%\n";
-        echo "     平均响应时间: {$avgResponseTime}ms\n";
-        echo "\n";
+        echo "   频率限制测试结果:<br>\n";
+        echo "     总调用次数: {$callCount}<br>\n";
+        echo "     成功次数: {$successCount}<br>\n";
+        echo "     频率限制次数: {$rateLimitHits}<br>\n";
+        echo "     成功率: " . round(($successCount / $callCount) * 100, 2) . "%<br>\n";
+        echo "     平均响应时间: {$avgResponseTime}ms<br>\n";
+        echo "<br>\n";
     }
 
     /**
@@ -856,14 +856,14 @@ class ComprehensiveWechatApiTest
         ];
 
         // 输出测试摘要
-        echo "=== 测试完成 ===\n";
-        echo "总测试数: {$totalTests}\n";
-        echo "通过: {$passedTests}\n";
-        echo "失败: {$failedTests}\n";
-        echo "警告: {$warnings}\n";
-        echo "成功率: {$report['test_summary']['success_rate']}%\n";
-        echo "总执行时间: {$totalTime}ms\n";
-        echo "\n";
+        echo "=== 测试完成 ===<br>\n";
+        echo "总测试数: {$totalTests}<br>\n";
+        echo "通过: {$passedTests}<br>\n";
+        echo "失败: {$failedTests}<br>\n";
+        echo "警告: {$warnings}<br>\n";
+        echo "成功率: {$report['test_summary']['success_rate']}%<br>\n";
+        echo "总执行时间: {$totalTime}ms<br>\n";
+        echo "<br>\n";
 
         return $report;
     }
@@ -933,14 +933,14 @@ $report = $test->runAllTests();
 $reportFile = __DIR__ . '/wechat_api_connection_test_report_' . date('Ymd_His') . '.json';
 file_put_contents($reportFile, json_encode($report, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
-echo "详细测试报告已保存到: {$reportFile}\n";
+echo "详细测试报告已保存到: {$reportFile}<br>\n";
 
 // 输出修复建议
 if (!empty($report['recommendations'])) {
-    echo "\n=== 修复建议 ===\n";
+    echo "<br>=== 修复建议 ===<br>\n";
     foreach ($report['recommendations'] as $index => $recommendation) {
-        echo ($index + 1) . ". {$recommendation}\n";
+        echo ($index + 1) . ". {$recommendation}<br>\n";
     }
 } else {
-    echo "\n✅ 所有测试通过，无需修复\n";
+    echo "<br>✅ 所有测试通过，无需修复<br>\n";
 }
