@@ -1,0 +1,111 @@
+{
+    "test_summary": {
+        "total_tests": 10,
+        "passed_tests": 6,
+        "failed_tests": 4,
+        "warnings": 0,
+        "success_rate": 60,
+        "total_execution_time_ms": 2071.11,
+        "test_date": "2025-12-05 06:23:36"
+    },
+    "test_results": {
+        "network_connectivity": {
+            "api.weixin.qq.com": {
+                "status": "FAILED",
+                "status_code": 404,
+                "response_time_ms": 163.01,
+                "description": "微信API服务器",
+                "error": null
+            },
+            "mp.weixin.qq.com": {
+                "status": "SUCCESS",
+                "status_code": 200,
+                "response_time_ms": 216.98,
+                "description": "微信公众号平台",
+                "error": null
+            },
+            "res.wx.qq.com": {
+                "status": "FAILED",
+                "status_code": 404,
+                "response_time_ms": 85.27,
+                "description": "微信资源服务器",
+                "error": null
+            }
+        },
+        "dns_resolution": {
+            "api.weixin.qq.com": {
+                "status": "SUCCESS",
+                "resolution_time_ms": 7.87,
+                "ip_addresses": [
+                    "198.18.0.202"
+                ],
+                "error": null
+            },
+            "mp.weixin.qq.com": {
+                "status": "SUCCESS",
+                "resolution_time_ms": 5.33,
+                "ip_addresses": [
+                    "198.18.0.203"
+                ],
+                "error": null
+            },
+            "res.wx.qq.com": {
+                "status": "SUCCESS",
+                "resolution_time_ms": 3.79,
+                "ip_addresses": [
+                    "198.18.0.204"
+                ],
+                "error": null
+            }
+        },
+        "ssl_certificates": {
+            "api.weixin.qq.com": {
+                "status": "SUCCESS",
+                "subject": "mp.weixin.qq.com",
+                "issuer": "DigiCert Secure Site OV G2 TLS CN RSA4096 SHA256 2022 CA1",
+                "valid_from": "2025-10-23 00:00:00",
+                "valid_to": "2026-11-23 23:59:59",
+                "days_until_expiry": 353,
+                "error": null
+            },
+            "mp.weixin.qq.com": {
+                "status": "SUCCESS",
+                "subject": "mp.weixin.qq.com",
+                "issuer": "DigiCert Secure Site OV G2 TLS CN RSA4096 SHA256 2022 CA1",
+                "valid_from": "2025-10-23 00:00:00",
+                "valid_to": "2026-11-23 23:59:59",
+                "days_until_expiry": 353,
+                "error": null
+            }
+        },
+        "access_token": {
+            "wx844c41dbae899300": {
+                "status": "FAILED",
+                "access_token": null,
+                "expires_in": null,
+                "response_time_ms": 119.62,
+                "error": "错误码: 40164, 错误信息: invalid ip 113.132.62.106 ipv6 ::ffff:113.132.62.106, not in whitelist rid: 69327a66-0548c201-0a6dc0b6",
+                "full_response": {
+                    "errcode": 40164,
+                    "errmsg": "invalid ip 113.132.62.106 ipv6 ::ffff:113.132.62.106, not in whitelist rid: 69327a66-0548c201-0a6dc0b6"
+                }
+            },
+            "test_app_id_001": {
+                "status": "FAILED",
+                "access_token": null,
+                "expires_in": null,
+                "response_time_ms": 52.21,
+                "error": "错误码: 40013, 错误信息: invalid appid rid: 69327a66-771930b1-031f0527",
+                "full_response": {
+                    "errcode": 40013,
+                    "errmsg": "invalid appid rid: 69327a66-771930b1-031f0527"
+                }
+            }
+        }
+    },
+    "recommendations": [
+        "AppID test_app_id_001 无效，请检查公众号配置",
+        "无法连接到 api.weixin.qq.com，请检查DNS解析和网络连接",
+        "无法连接到 res.wx.qq.com，请检查DNS解析和网络连接"
+    ]
+}

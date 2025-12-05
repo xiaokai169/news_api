@@ -182,6 +182,10 @@
       <path value="$PROJECT_DIR$/vendor/lexik/jwt-authentication-bundle" />
       <path value="$PROJECT_DIR$/vendor/lcobucci/clock" />
       <path value="$PROJECT_DIR$/vendor/lcobucci/jwt" />
+      <path value="$PROJECT_DIR$/vendor/symfony/monolog-bridge" />
+      <path value="$PROJECT_DIR$/vendor/symfony/monolog-bundle" />
+      <path value="$PROJECT_DIR$/vendor/namshi/jose" />
+      <path value="$PROJECT_DIR$/vendor/monolog/monolog" />
     </include_path>
   </component>
   <component name="ProjectColorInfo">{
@@ -261,6 +265,7 @@
       <workItem from="1764396813566" duration="594000" />
       <workItem from="1764724119778" duration="3444000" />
       <workItem from="1764834528469" duration="611000" />
+      <workItem from="1764913542741" duration="591000" />
     </task>
     <servers />
   </component>
