@@ -15,10 +15,10 @@ class DistributedLock
     #[ORM\Column(type: 'integer')]
     private ?int $id = null;
 
-    #[ORM\Column(type: 'string', length: 255, unique: true)]
+    #[ORM\Column(type: 'string', length: 255, unique: true, name: 'lockKey')]
     private ?string $lockKey = null;
 
-    #[ORM\Column(type: 'string', length: 255)]
+    #[ORM\Column(type: 'string', length: 255, name: 'lockId')]
     private ?string $lockId = null;
 
     #[ORM\Column(type: 'datetime', name: 'expire_time')]

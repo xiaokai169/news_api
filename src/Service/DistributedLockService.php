@@ -52,10 +52,10 @@ class DistributedLockService
                 'expire_time' => $expireTime
             ]);
 
-            $sql = "INSERT INTO distributed_locks (lock_key, lock_id, expire_time, created_at)
+            $sql = "INSERT INTO distributed_locks (lockKey, lockId, expire_time, created_at)
                     VALUES (?, ?, ?, NOW())
                     ON DUPLICATE KEY UPDATE
-                    lock_id = IF(expire_time < NOW(), VALUES(lock_id), lock_id),
+                    lockId = IF(expire_time < NOW(), VALUES(lockId), lockId),
                     expire_time = IF(expire_time < NOW(), VALUES(expire_time), expire_time)";
 
             $stmt = $connection->prepare($sql);
@@ -67,12 +67,12 @@ class DistributedLockService
             ]);
 
             // 检查是否成功获取锁
-            $checkSql = "SELECT lock_id, expire_time FROM distributed_locks WHERE lock_key = ? AND lock_id = ? AND expire_time > NOW()";
+            $checkSql = "SELECT lockId, expire_time FROM distributed_locks WHERE lockKey = ? AND lockId = ? AND expire_time > NOW()";
             $checkStmt = $connection->prepare($checkSql);
             $checkResult = $checkStmt->executeQuery([$lockKey, $lockId]);
             $currentLock = $checkResult->fetchAssociative();
 
-            $acquired = $currentLock && $currentLock['lock_id'] === $lockId;
+            $acquired = $currentLock && $currentLock['lockId'] === $lockId;
 
             $this->logger->info('锁获取结果检查', [
                 'lock_key' => $lockKey,
@@ -83,7 +83,7 @@ class DistributedLockService
 
             if (!$acquired) {
                 // 检查当前锁的状态
-                $currentStatusSql = "SELECT lock_id, expire_time FROM distributed_locks WHERE lock_key = ?";
+                $currentStatusSql = "SELECT lockId, expire_time FROM distributed_locks WHERE lockKey = ?";
                 $statusStmt = $connection->prepare($currentStatusSql);
                 $statusResult = $statusStmt->executeQuery([$lockKey]);
                 $currentStatus = $statusResult->fetchAssociative();
@@ -124,7 +124,7 @@ class DistributedLockService
         try {
             $connection = $this->entityManager->getConnection();
 
-            $sql = "DELETE FROM distributed_locks WHERE lock_key = ?";
+            $sql = "DELETE FROM distributed_locks WHERE lockKey = ?";
             $stmt = $connection->prepare($sql);
             $result = $stmt->executeStatement([$lockKey]);
 
@@ -157,7 +157,7 @@ class DistributedLockService
                 'current_time' => date('Y-m-d H:i:s')
             ]);
 
-            $sql = "SELECT lock_id, expire_time FROM distributed_locks WHERE lock_key = ? AND expire_time > NOW()";
+            $sql = "SELECT lockId, expire_time FROM distributed_locks WHERE lockKey = ? AND expire_time > NOW()";
             $stmt = $connection->prepare($sql);
             $result = $stmt->executeQuery([$lockKey]);
             $lock = $result->fetchAssociative();
@@ -173,7 +173,7 @@ class DistributedLockService
 
             // 如果没有找到有效锁，检查是否有过期锁
             if (!$isLocked) {
-                $expiredSql = "SELECT lock_id, expire_time FROM distributed_locks WHERE lock_key = ?";
+                $expiredSql = "SELECT lockId, expire_time FROM distributed_locks WHERE lockKey = ?";
                 $expiredStmt = $connection->prepare($expiredSql);
                 $expiredResult = $expiredStmt->executeQuery([$lockKey]);
                 $expiredLock = $expiredResult->fetchAssociative();
@@ -234,7 +234,7 @@ class DistributedLockService
 
             $expireTime = date('Y-m-d H:i:s', time() + $ttl);
 
-            $sql = "UPDATE distributed_locks SET expire_time = ? WHERE lock_key = ? AND expire_time > NOW()";
+            $sql = "UPDATE distributed_locks SET expire_time = ? WHERE lockKey = ? AND expire_time > NOW()";
             $stmt = $connection->prepare($sql);
             $result = $stmt->executeStatement([$expireTime, $lockKey]);
 
