@@ -13,7 +13,7 @@ class WechatApiService
     private const WECHAT_API_BASE = 'https://api.weixin.qq.com/cgi-bin';
 
     public function __construct(
-        private readonly LoggerInterface $logger
+        private LoggerInterface $logger
     ) {
         // 使用专用的微信日志通道
         if ($this->logger instanceof Logger) {
