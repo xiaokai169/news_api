@@ -929,11 +929,16 @@ class ComprehensiveWechatApiTest
 $test = new ComprehensiveWechatApiTest();
 $report = $test->runAllTests();
 
-// 保存测试报告
+// 尝试保存测试报告，如果失败则直接输出
 $reportFile = __DIR__ . '/wechat_api_connection_test_report_' . date('Ymd_His') . '.json';
-file_put_contents($reportFile, json_encode($report, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+$saved = @file_put_contents($reportFile, json_encode($report, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
-echo "详细测试报告已保存到: {$reportFile}<br>\n";
+if ($saved) {
+    echo "详细测试报告已保存到: {$reportFile}<br>\n";
+} else {
+    echo "无法保存报告文件，直接输出测试结果：<br>\n";
+    echo "<pre>" . json_encode($report, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . "</pre>\n";
+}
 
 // 输出修复建议
 if (!empty($report['recommendations'])) {
