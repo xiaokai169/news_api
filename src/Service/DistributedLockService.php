@@ -31,12 +31,26 @@ class DistributedLockService
             // 使用数据库实现简单的分布式锁
             $connection = $this->entityManager->getConnection();
 
+            // 添加详细日志
+            $this->logger->info('开始获取分布式锁', [
+                'lock_key' => $lockKey,
+                'ttl' => $ttl,
+                'current_time' => date('Y-m-d H:i:s'),
+                'lock_id' => md5($lockKey)
+            ]);
+
             // 清理过期的锁
             $this->cleanExpiredLocks();
 
             // 尝试获取锁
             $lockId = md5($lockKey);
             $expireTime = date('Y-m-d H:i:s', time() + $ttl);
+
+            $this->logger->info('准备执行锁获取SQL', [
+                'lock_key' => $lockKey,
+                'lock_id' => $lockId,
+                'expire_time' => $expireTime
+            ]);
 
             $sql = "INSERT INTO distributed_locks (lock_key, lock_id, expire_time, created_at)
                     VALUES (?, ?, ?, NOW())
@@ -47,13 +61,39 @@ class DistributedLockService
             $stmt = $connection->prepare($sql);
             $result = $stmt->executeStatement([$lockKey, $lockId, $expireTime]);
 
+            $this->logger->info('锁获取SQL执行完成', [
+                'lock_key' => $lockKey,
+                'affected_rows' => $result
+            ]);
+
             // 检查是否成功获取锁
-            $checkSql = "SELECT lock_id FROM distributed_locks WHERE lock_key = ? AND lock_id = ? AND expire_time > NOW()";
+            $checkSql = "SELECT lock_id, expire_time FROM distributed_locks WHERE lock_key = ? AND lock_id = ? AND expire_time > NOW()";
             $checkStmt = $connection->prepare($checkSql);
             $checkResult = $checkStmt->executeQuery([$lockKey, $lockId]);
             $currentLock = $checkResult->fetchAssociative();
 
             $acquired = $currentLock && $currentLock['lock_id'] === $lockId;
+
+            $this->logger->info('锁获取结果检查', [
+                'lock_key' => $lockKey,
+                'acquired' => $acquired,
+                'current_lock' => $currentLock,
+                'expected_lock_id' => $lockId
+            ]);
+
+            if (!$acquired) {
+                // 检查当前锁的状态
+                $currentStatusSql = "SELECT lock_id, expire_time FROM distributed_locks WHERE lock_key = ?";
+                $statusStmt = $connection->prepare($currentStatusSql);
+                $statusResult = $statusStmt->executeQuery([$lockKey]);
+                $currentStatus = $statusResult->fetchAssociative();
+
+                $this->logger->warning('锁获取失败详细信息', [
+                    'lock_key' => $lockKey,
+                    'current_status' => $currentStatus,
+                    'is_expired' => $currentStatus ? strtotime($currentStatus['expire_time']) < time() : 'no_lock'
+                ]);
+            }
 
             if ($acquired) {
                 $this->logger->info('成功获取分布式锁', ['lock_key' => $lockKey, 'ttl' => $ttl]);
@@ -66,7 +106,8 @@ class DistributedLockService
         } catch (\Exception $e) {
             $this->logger->error('获取分布式锁时发生错误', [
                 'lock_key' => $lockKey,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
             return false;
         }
@@ -111,17 +152,46 @@ class DistributedLockService
         try {
             $connection = $this->entityManager->getConnection();
 
-            $sql = "SELECT lock_id FROM distributed_locks WHERE lock_key = ? AND expire_time > NOW()";
+            $this->logger->info('检查分布式锁状态', [
+                'lock_key' => $lockKey,
+                'current_time' => date('Y-m-d H:i:s')
+            ]);
+
+            $sql = "SELECT lock_id, expire_time FROM distributed_locks WHERE lock_key = ? AND expire_time > NOW()";
             $stmt = $connection->prepare($sql);
             $result = $stmt->executeQuery([$lockKey]);
             $lock = $result->fetchAssociative();
 
-            return $lock !== false;
+            $isLocked = $lock !== false;
+
+            $this->logger->info('锁状态检查结果', [
+                'lock_key' => $lockKey,
+                'is_locked' => $isLocked,
+                'lock_info' => $lock,
+                'sql' => $sql
+            ]);
+
+            // 如果没有找到有效锁，检查是否有过期锁
+            if (!$isLocked) {
+                $expiredSql = "SELECT lock_id, expire_time FROM distributed_locks WHERE lock_key = ?";
+                $expiredStmt = $connection->prepare($expiredSql);
+                $expiredResult = $expiredStmt->executeQuery([$lockKey]);
+                $expiredLock = $expiredResult->fetchAssociative();
+
+                $this->logger->info('检查过期锁状态', [
+                    'lock_key' => $lockKey,
+                    'expired_lock' => $expiredLock,
+                    'is_expired' => $expiredLock ? strtotime($expiredLock['expire_time']) < time() : 'no_lock'
+                ]);
+            }
+
+            return $isLocked;
 
         } catch (\Exception $e) {
             $this->logger->error('检查分布式锁时发生错误', [
                 'lock_key' => $lockKey,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
             return false;
         }
@@ -187,3 +257,4 @@ class DistributedLockService
         }
     }
 }
+

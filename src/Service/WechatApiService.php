@@ -4,6 +4,7 @@ namespace App\Service;
 
 use App\Entity\WechatPublicAccount;
 use Psr\Log\LoggerInterface;
+use Monolog\Logger;
 use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 
@@ -14,6 +15,10 @@ class WechatApiService
     public function __construct(
         private readonly LoggerInterface $logger
     ) {
+        // 使用专用的微信日志通道
+        if ($this->logger instanceof Logger) {
+            $this->logger = $this->logger->withName('wechat');
+        }
     }
 
     /**
