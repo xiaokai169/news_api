@@ -397,13 +397,13 @@ class ComprehensiveWechatApiTest
                 ]
             ],
             [
-                'name' => '获取已发布消息',
+                'name' => '获取已发布文章列表',
                 'method' => 'POST',
                 'url' => self::WECHAT_API_BASE . '/freepublish/batchget',
                 'data' => [
                     'offset' => 0,
-                    'count' => 1,
-                    'no_content' => 1
+                    'count' => 10,
+                    'no_content' => 0
                 ]
             ],
             [
