@@ -11,4 +11,6 @@ return [
     Symfony\Bundle\SecurityBundle\SecurityBundle::class => ['all' => true],
     Lexik\Bundle\JWTAuthenticationBundle\LexikJWTAuthenticationBundle::class => ['all' => true],
     Symfony\Bundle\MonologBundle\MonologBundle::class => ['all' => true],
+    Siganushka\GenericBundle\SiganushkaGenericBundle::class => ['all' => true],
+    Siganushka\MediaBundle\SiganushkaMediaBundle::class => ['all' => true],
 ];

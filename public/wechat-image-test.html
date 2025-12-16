@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>微信图片懒加载测试页面</title>
+
+    <!-- 引入微信图片样式 -->
+    <link rel="stylesheet" href="/css/wechat-image-styles.css">
+
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .test-container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .test-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .test-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+        }
+
+        .test-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .status-success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .status-warning {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .status-error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .button-group {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 0 10px;
+            font-size: 14px;
+        }
+
+        .test-button:hover {
+            background: #0056b3;
+        }
+
+        .log-container {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 15px;
+        }
+
+        .log-entry {
+            margin: 2px 0;
+            padding: 2px 0;
+        }
+
+        .log-info {
+            color: #4fc3f7;
+        }
+
+        .log-success {
+            color: #81c784;
+        }
+
+        .log-warning {
+            color: #ffb74d;
+        }
+
+        .log-error {
+            color: #e57373;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="test-container">
+        <div class="test-header">
+            <h1>微信图片懒加载修复测试</h1>
+            <p>测试微信编辑器图片的懒加载、样式和代理功能</p>
+        </div>
+
+        <!-- 测试1: 基础懒加载功能 -->
+        <div class="test-section">
+            <div class="test-title">
+                测试1: 基础懒加载功能
+                <span id="test1-status" class="status-indicator status-warning">等待测试</span>
+            </div>
+            <p>测试图片懒加载的基本功能，包括data-src到src的转换。</p>
+            <div class="rich_pages">
+                <p>以下是测试图片，应该会懒加载：</p>
+                <img data-src="https://mmbiz.qpic.cn/mmbiz_png/test1.jpg" alt="测试图片1"
+                    style="width: 300px; height: 200px;">
+                <img class="wxw-img" data-src="https://mmbiz.qpic.cn/mmbiz_png/test2.jpg" alt="测试图片2"
+                    style="width: 300px; height: 200px;">
+                <img class="js_insertlocalimg" data-src="https://mmbiz.qpic.cn/mmbiz_png/test3.jpg" alt="测试图片3"
+                    style="width: 300px; height: 200px;">
+            </div>
+        </div>
+
+        <!-- 测试2: 图片代理功能 -->
+        <div class="test-section">
+            <div class="test-title">
+                测试2: 图片代理功能
+                <span id="test2-status" class="status-indicator status-warning">等待测试</span>
+            </div>
+            <p>测试通过图片代理访问跨域图片的功能。</p>
+            <div class="button-group">
+                <button class="test-button" onclick="testImageProxy()">测试图片代理</button>
+                <button class="test-button" onclick="testDirectAccess()">测试直接访问</button>
+            </div>
+            <div id="proxy-test-results"></div>
+        </div>
+
+        <!-- 测试3: 错误处理 -->
+        <div class="test-section">
+            <div class="test-title">
+                测试3: 错误处理
+                <span id="test3-status" class="status-indicator status-warning">等待测试</span>
+            </div>
+            <p>测试图片加载失败时的错误处理。</p>
+            <div class="rich_pages">
+                <p>以下是无效的图片URL，应该显示错误处理：</p>
+                <img data-src="https://invalid-url-that-does-not-exist.com/image.jpg" alt="无效图片"
+                    style="width: 300px; height: 200px;">
+            </div>
+        </div>
+
+        <!-- 测试控制面板 -->
+        <div class="test-section">
+            <div class="test-title">测试控制面板</div>
+            <div class="button-group">
+                <button class="test-button" onclick="runAllTests()">运行所有测试</button>
+                <button class="test-button" onclick="clearLogs()">清空日志</button>
+                <button class="test-button" onclick="scrollToBottom()">滚动到底部</button>
+            </div>
+        </div>
+
+        <!-- 日志输出 -->
+        <div class="test-section">
+            <div class="test-title">测试日志</div>
+            <div id="log-container" class="log-container">
+                <div class="log-entry log-info">测试页面已加载，等待开始测试...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入懒加载JavaScript -->
+    <script src="/js/lazy-loading.js"></script>
+
+    <script>
+        // 测试日志函数
+        function log(message, type = 'info') {
+            const logContainer = document.getElementById('log-container');
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry log-${type}`;
+            logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        // 更新测试状态
+        function updateTestStatus(testId, status, message) {
+            const statusElement = document.getElementById(`${testId}-status`);
+            if (statusElement) {
+                statusElement.className = `status-indicator status-${status}`;
+                statusElement.textContent = message;
+            }
+        }
+
+        // 测试图片代理功能
+        function testImageProxy() {
+            log('开始测试图片代理功能...', 'info');
+
+            const testUrl = 'https://mmbiz.qpic.cn/mmbiz_png/test-proxy.jpg';
+            const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(testUrl)}`;
+
+            fetch(proxyUrl)
+                .then(response => {
+                    if (response.ok) {
+                        log('图片代理测试成功', 'success');
+                        updateTestStatus('test2', 'success', '代理测试成功');
+                    } else {
+                        log(`图片代理测试失败: ${response.status}`, 'error');
+                        updateTestStatus('test2', 'error', '代理测试失败');
+                    }
+                })
+                .catch(error => {
+                    log(`图片代理测试错误: ${error.message}`, 'error');
+                    updateTestStatus('test2', 'error', '代理测试错误');
+                });
+        }
+
+        // 测试直接访问
+        function testDirectAccess() {
+            log('开始测试直接访问...', 'info');
+
+            const testUrl = 'https://mmbiz.qpic.cn/mmbiz_png/test-direct.jpg';
+
+            fetch(testUrl)
+                .then(response => {
+                    if (response.ok) {
+                        log('直接访问测试成功', 'success');
+                    } else {
+                        log(`直接访问测试失败: ${response.status}`, 'warning');
+                    }
+                })
+                .catch(error => {
+                    log(`直接访问测试错误: ${error.message}`, 'warning');
+                });
+        }
+
+        // 运行所有测试
+        function runAllTests() {
+            log('开始运行所有测试...', 'info');
+
+            // 测试1: 懒加载功能
+            setTimeout(() => {
+                const lazyImages = document.querySelectorAll('img[data-src]');
+                if (lazyImages.length > 0) {
+                    log(`发现 ${lazyImages.length} 个需要懒加载的图片`, 'info');
+                    updateTestStatus('test1', 'success', `发现${lazyImages.length}个图片`);
+
+                    // 触发懒加载
+                    lazyImages.forEach(img => {
+                        if (window.WeChatLazyLoader) {
+                            window.WeChatLazyLoader.handleImage(img);
+                        }
+                    });
+                } else {
+                    log('未发现需要懒加载的图片', 'warning');
+                    updateTestStatus('test1', 'error', '未发现图片');
+                }
+            }, 1000);
+
+            // 测试2: 图片代理
+            setTimeout(() => {
+                testImageProxy();
+            }, 2000);
+
+            // 测试3: 错误处理
+            setTimeout(() => {
+                const errorImages = document.querySelectorAll('img[data-src*="invalid-url"]');
+                if (errorImages.length > 0) {
+                    log(`发现 ${errorImages.length} 个错误测试图片`, 'info');
+                    updateTestStatus('test3', 'success', `发现${errorImages.length}个错误图片`);
+                } else {
+                    log('未发现错误测试图片', 'warning');
+                    updateTestStatus('test3', 'error', '未发现错误图片');
+                }
+            }, 3000);
+
+            log('所有测试已启动', 'success');
+        }
+
+        // 清空日志
+        function clearLogs() {
+            const logContainer = document.getElementById('log-container');
+            logContainer.innerHTML = '<div class="log-entry log-info">日志已清空</div>';
+        }
+
+        // 滚动到底部触发懒加载
+        function scrollToBottom() {
+            window.scrollTo(0, document.body.scrollHeight);
+            log('已滚动到底部，触发懒加载', 'info');
+        }
+
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', function () {
+            log('测试页面初始化完成', 'success');
+
+            // 检查懒加载脚本是否加载
+            setTimeout(() => {
+                if (typeof window.WeChatLazyLoader !== 'undefined') {
+                    log('懒加载脚本已加载', 'success');
+                } else {
+                    log('懒加载脚本未加载', 'error');
+                }
+            }, 500);
+        });
+
+        // 监听图片加载事件
+        document.addEventListener('load', function (e) {
+            if (e.target.tagName === 'IMG') {
+                log(`图片加载成功: ${e.target.src}`, 'success');
+            }
+        }, true);
+
+        // 监听图片错误事件
+        document.addEventListener('error', function (e) {
+            if (e.target.tagName === 'IMG') {
+                log(`图片加载失败: ${e.target.src || e.target.dataset.src}`, 'error');
+            }
+        }, true);
+    </script>
+</body>
+
+</html>

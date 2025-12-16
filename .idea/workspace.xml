@@ -186,6 +186,24 @@
       <path value="$PROJECT_DIR$/vendor/symfony/monolog-bundle" />
       <path value="$PROJECT_DIR$/vendor/namshi/jose" />
       <path value="$PROJECT_DIR$/vendor/monolog/monolog" />
+      <path value="$PROJECT_DIR$/vendor/guzzlehttp/promises" />
+      <path value="$PROJECT_DIR$/vendor/guzzlehttp/guzzle" />
+      <path value="$PROJECT_DIR$/vendor/guzzlehttp/psr7" />
+      <path value="$PROJECT_DIR$/vendor/ralouphie/getallheaders" />
+      <path value="$PROJECT_DIR$/vendor/spatie/image-optimizer" />
+      <path value="$PROJECT_DIR$/vendor/knplabs/knp-components" />
+      <path value="$PROJECT_DIR$/vendor/siganushka/media-bundle" />
+      <path value="$PROJECT_DIR$/vendor/siganushka/doctrine-contracts" />
+      <path value="$PROJECT_DIR$/vendor/siganushka/generic-bundle" />
+      <path value="$PROJECT_DIR$/vendor/psr/http-message" />
+      <path value="$PROJECT_DIR$/vendor/psr/http-client" />
+      <path value="$PROJECT_DIR$/vendor/psr/http-factory" />
+      <path value="$PROJECT_DIR$/vendor/symfony/polyfill-intl-icu" />
+      <path value="$PROJECT_DIR$/vendor/symfony/polyfill-intl-idn" />
+      <path value="$PROJECT_DIR$/vendor/symfony/mime" />
+      <path value="$PROJECT_DIR$/vendor/symfony/polyfill-php85" />
+      <path value="$PROJECT_DIR$/vendor/symfony/form" />
+      <path value="$PROJECT_DIR$/vendor/obs/esdk-obs-php" />
     </include_path>
   </component>
   <component name="ProjectColorInfo">{
@@ -265,7 +283,9 @@
       <workItem from="1764396813566" duration="594000" />
       <workItem from="1764724119778" duration="3444000" />
       <workItem from="1764834528469" duration="611000" />
-      <workItem from="1764913542741" duration="1707000" />
+      <workItem from="1764913542741" duration="2324000" />
+      <workItem from="1765258250260" duration="1181000" />
+      <workItem from="1765345267967" duration="41000" />
     </task>
     <servers />
   </component>

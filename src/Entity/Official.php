@@ -25,7 +25,6 @@ class Official
     #[Groups(['official:read', 'official:write'])]
     private string $title = '';
 
-
     #[ORM\Column(type: Types::TEXT)]
     #[Assert\NotBlank]
     #[Groups(['official:read', 'official:write'])]
@@ -36,6 +35,13 @@ class Official
     #[Groups(['official:read', 'official:write'])]
     private int $status = 2;
 
+    #[ORM\Column(name: 'category_id', type: Types::INTEGER, options: ['default' => 1])]
+    #[Groups(['official:read', 'official:write'])]
+    private int $categoryId = 1;
+
+    #[ORM\Column(name: 'is_deleted', type: Types::BOOLEAN, options: ['default' => false])]
+    #[Groups(['official:read', 'official:write'])]
+    private bool $isDeleted = false;
 
     #[ORM\Column(name: 'create_at', type: Types::DATETIME_MUTABLE)]
     #[Groups(['official:read'])]
@@ -57,29 +63,56 @@ class Official
     #[Groups(['official:read', 'official:write'])]
     private ?string $articleId = null;
 
-    #[ORM\ManyToOne(inversedBy: 'officials')]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\Column(name: 'wechat_account_id', type: Types::STRING, length: 100, nullable: true)]
     #[Groups(['official:read', 'official:write'])]
-    private ?SysNewsArticleCategory $category = null;
+    private ?string $wechatAccountId = null;
 
-    public function __construct()
+    #[ORM\Column(type: Types::STRING, length: 100, nullable: true)]
+    #[Groups(['official:read', 'official:write'])]
+    private ?string $author = null;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Groups(['official:read', 'official:write'])]
+    private ?string $digest = null;
+
+    #[ORM\Column(name: 'thumb_media_id', type: Types::STRING, length: 255, nullable: true)]
+    #[Groups(['official:read', 'official:write'])]
+    private ?string $thumbMediaId = null;
+
+    #[ORM\Column(name: 'thumb_url', type: Types::STRING, length: 500, nullable: true)]
+    #[Groups(['official:read', 'official:write'])]
+    private ?string $thumbUrl = null;
+
+    #[ORM\Column(name: 'show_cover_pic', type: Types::SMALLINT, options: ['default' => 0])]
+    #[Groups(['official:read', 'official:write'])]
+    private int $showCoverPic = 0;
+
+    #[ORM\Column(name: 'need_open_comment', type: Types::SMALLINT, options: ['default' => 0])]
+    #[Groups(['official:read', 'official:write'])]
+    private int $needOpenComment = 0;
+
+    #[ORM\Column(name: 'only_fans_can_comment', type: Types::SMALLINT, options: ['default' => 0])]
+    #[Groups(['official:read', 'official:write'])]
+    private int $onlyFansCanComment = 0;
+
+    // 添加生命周期回调方法
+    #[ORM\PrePersist]
+    public function setTimestampsOnCreate(): void
     {
         $this->createAt = new \DateTime();
         $this->updatedAt = new \DateTime();
     }
 
     #[ORM\PreUpdate]
-    public function updateTimestamps(): void
+    public function setTimestampsOnUpdate(): void
     {
         $this->updatedAt = new \DateTime();
     }
 
-    // Getters and Setters
     public function getId(): ?int
     {
         return $this->id;
     }
-
 
     public function getTitle(): string
     {
@@ -89,9 +122,9 @@ class Official
     public function setTitle(string $title): self
     {
         $this->title = $title;
+
         return $this;
     }
-
 
     public function getContent(): string
     {
@@ -101,6 +134,7 @@ class Official
     public function setContent(string $content): self
     {
         $this->content = $content;
+
         return $this;
     }
 
@@ -112,9 +146,33 @@ class Official
     public function setStatus(int $status): self
     {
         $this->status = $status;
+
         return $this;
     }
 
+    public function getCategoryId(): int
+    {
+        return $this->categoryId;
+    }
+
+    public function setCategoryId(int $categoryId): self
+    {
+        $this->categoryId = $categoryId;
+
+        return $this;
+    }
+
+    public function getIsDeleted(): bool
+    {
+        return $this->isDeleted;
+    }
+
+    public function setIsDeleted(bool $isDeleted): self
+    {
+        $this->isDeleted = $isDeleted;
+
+        return $this;
+    }
 
     public function getCreateAt(): \DateTimeInterface
     {
@@ -124,6 +182,7 @@ class Official
     public function setCreateAt(\DateTimeInterface $createAt): self
     {
         $this->createAt = $createAt;
+
         return $this;
     }
 
@@ -135,6 +194,7 @@ class Official
     public function setUpdatedAt(\DateTimeInterface $updatedAt): self
     {
         $this->updatedAt = $updatedAt;
+
         return $this;
     }
 
@@ -146,6 +206,7 @@ class Official
     public function setReleaseTime(string $releaseTime): self
     {
         $this->releaseTime = $releaseTime;
+
         return $this;
     }
 
@@ -157,17 +218,6 @@ class Official
     public function setOriginalUrl(string $originalUrl): self
     {
         $this->originalUrl = $originalUrl;
-        return $this;
-    }
-
-    public function getCategory(): ?SysNewsArticleCategory
-    {
-        return $this->category;
-    }
-
-    public function setCategory(?SysNewsArticleCategory $category): static
-    {
-        $this->category = $category;
 
         return $this;
     }
@@ -180,6 +230,103 @@ class Official
     public function setArticleId(?string $articleId): self
     {
         $this->articleId = $articleId;
+
+        return $this;
+    }
+
+    public function getWechatAccountId(): ?string
+    {
+        return $this->wechatAccountId;
+    }
+
+    public function setWechatAccountId(?string $wechatAccountId): self
+    {
+        $this->wechatAccountId = $wechatAccountId;
+
+        return $this;
+    }
+
+    public function getAuthor(): ?string
+    {
+        return $this->author;
+    }
+
+    public function setAuthor(?string $author): self
+    {
+        $this->author = $author;
+
+        return $this;
+    }
+
+    public function getDigest(): ?string
+    {
+        return $this->digest;
+    }
+
+    public function setDigest(?string $digest): self
+    {
+        $this->digest = $digest;
+
+        return $this;
+    }
+
+    public function getThumbMediaId(): ?string
+    {
+        return $this->thumbMediaId;
+    }
+
+    public function setThumbMediaId(?string $thumbMediaId): self
+    {
+        $this->thumbMediaId = $thumbMediaId;
+
+        return $this;
+    }
+
+    public function getThumbUrl(): ?string
+    {
+        return $this->thumbUrl;
+    }
+
+    public function setThumbUrl(?string $thumbUrl): self
+    {
+        $this->thumbUrl = $thumbUrl;
+
+        return $this;
+    }
+
+    public function getShowCoverPic(): int
+    {
+        return $this->showCoverPic;
+    }
+
+    public function setShowCoverPic(int $showCoverPic): self
+    {
+        $this->showCoverPic = $showCoverPic;
+
+        return $this;
+    }
+
+    public function getNeedOpenComment(): int
+    {
+        return $this->needOpenComment;
+    }
+
+    public function setNeedOpenComment(int $needOpenComment): self
+    {
+        $this->needOpenComment = $needOpenComment;
+
+        return $this;
+    }
+
+    public function getOnlyFansCanComment(): int
+    {
+        return $this->onlyFansCanComment;
+    }
+
+    public function setOnlyFansCanComment(int $onlyFansCanComment): self
+    {
+        $this->onlyFansCanComment = $onlyFansCanComment;
         return $this;
     }
 }
+// 添加缺失的类结束大括号

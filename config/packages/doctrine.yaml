@@ -12,16 +12,18 @@ doctrine:
                 use_savepoints: true
                 # 设置用户数据库为只读模式
                 options:
-                    1000: true  # PDO::ATTR_EMULATE_PREPARES
+                    1000: true # PDO::ATTR_EMULATE_PREPARES
                     1002: "SET SESSION sql_mode = 'STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION'"
-                    3: 0  # PDO::ATTR_ERRMODE -> PDO::ERRMODE_EXCEPTION
+                    3: 0 # PDO::ATTR_ERRMODE -> PDO::ERRMODE_EXCEPTION
 
         # IMPORTANT: You MUST configure your server version,
         # either here or in the DATABASE_URL env var (see .env file)
         #server_version: '16'
 
     orm:
-        default_entity_manager: default  # 修复：将默认实体管理器设置为默认连接，解决500错误
+        auto_generate_proxy_classes: true
+        enable_lazy_ghost_objects: true
+        default_entity_manager: default # 修复：将默认实体管理器设置为默认连接，解决500错误
         entity_managers:
             default:
                 connection: default

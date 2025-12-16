@@ -1,0 +1,26 @@
+-- 微信同步数据库结构修复脚本
+-- 执行前请备份数据库！
+
+-- 检查并添加微信相关字段到 official 表
+ALTER TABLE official
+ADD COLUMN IF NOT EXISTS wechat_account_id VARCHAR(100) DEFAULT NULL,
+ADD COLUMN IF NOT EXISTS author VARCHAR(100) DEFAULT NULL,
+ADD COLUMN IF NOT EXISTS digest TEXT DEFAULT NULL,
+ADD COLUMN IF NOT EXISTS thumb_media_id VARCHAR(255) DEFAULT NULL,
+ADD COLUMN IF NOT EXISTS show_cover_pic SMALLINT DEFAULT 0,
+ADD COLUMN IF NOT EXISTS need_open_comment SMALLINT DEFAULT 0,
+ADD COLUMN IF NOT EXISTS only_fans_can_comment SMALLINT DEFAULT 0,
+ADD COLUMN IF NOT EXISTS thumb_url VARCHAR(500) DEFAULT NULL,
+ADD COLUMN IF NOT EXISTS is_deleted TINYINT(1) DEFAULT 0;
+
+-- 添加索引
+CREATE INDEX IF NOT EXISTS IDX_OFFICIAL_WECHAT_ACCOUNT_ID ON official (wechat_account_id);
+
+-- 检查并添加外键约束（如果 wechat_public_account 表存在）
+-- ALTER TABLE official
+-- ADD CONSTRAINT FK_OFFICIAL_WECHAT_ACCOUNT
+-- FOREIGN KEY (wechat_account_id) REFERENCES wechat_public_account (id)
+-- ON DELETE SET NULL;
+
+-- 验证修复结果
+DESCRIBE official;

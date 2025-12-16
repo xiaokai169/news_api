@@ -1,0 +1,266 @@
+<?php
+/**
+ * 微信同步完整环境诊断脚本
+ * 全面检查可能导致"同步完成，但存在错误"的所有问题源
+ */
+
+echo "=== 微信同步完整环境诊断 ===\n\n";
+
+// 手动加载必要文件
+require_once __DIR__ . '/../vendor/autoload.php';
+
+use App\Kernel;
+
+try {
+    echo "🔍 开始全面环境诊断...\n\n";
+
+    // 1. 检查PHP环境
+    echo "1. PHP环境检查:\n";
+    echo "   PHP版本: " . PHP_VERSION . "\n";
+    echo "   内存限制: " . ini_get('memory_limit') . "\n";
+    echo "   执行时间限制: " . ini_get('max_execution_time') . "秒\n";
+    echo "   上传文件大小: " . ini_get('upload_max_filesize') . "\n";
+
+    // 检查必需扩展
+    $requiredExtensions = ['curl', 'pdo', 'pdo_mysql', 'json', 'mbstring'];
+    foreach ($requiredExtensions as $ext) {
+        $status = extension_loaded($ext) ? '✅' : '❌';
+        echo "   扩展 {$ext}: {$status}\n";
+    }
+
+    // 2. 检查文件系统权限
+    echo "\n2. 文件系统权限检查:\n";
+    $directories = [
+        'var/log' => '日志目录',
+        'var/cache' => '缓存目录',
+        'public' => '公共目录',
+        'uploads' => '上传目录'
+    ];
+
+    foreach ($directories as $dir => $name) {
+        $fullPath = __DIR__ . '/../' . $dir;
+        if (is_dir($fullPath)) {
+            $writable = is_writable($fullPath) ? '✅' : '❌';
+            echo "   {$name} ({$dir}): {$writable}\n";
+        } else {
+            echo "   {$name} ({$dir}): ❌ 不存在\n";
+        }
+    }
+
+    // 3. 尝试启动Symfony容器
+    echo "\n3. Symfony容器检查:\n";
+    try {
+        $kernel = new Kernel($_ENV['APP_ENV'] ?? 'dev', (bool)($_ENV['APP_DEBUG'] ?? true));
+        $kernel->boot();
+
+        echo "   ✅ Symfony容器启动成功\n";
+
+        // 4. 检查数据库连接
+        echo "\n4. 数据库连接检查:\n";
+        $container = $kernel->getContainer();
+        $entityManager = $container->get('doctrine.orm.default_entity_manager');
+
+        try {
+            $connection = $entityManager->getConnection();
+            $connection->connect();
+
+            echo "   ✅ 数据库连接成功\n";
+
+            // 检查数据库版本
+            $version = $connection->fetchOne('SELECT VERSION()');
+            echo "   MySQL版本: {$version}\n";
+
+            // 检查关键表是否存在
+            $requiredTables = ['official', 'wechat_public_account', 'distributed_locks'];
+            foreach ($requiredTables as $table) {
+                $exists = $connection->executeQuery("SHOW TABLES LIKE '{$table}'")->fetchOne();
+                echo "   表 {$table}: " . ($exists ? '✅' : '❌') . "\n";
+            }
+
+            // 检查数据统计
+            $officialCount = $connection->fetchOne('SELECT COUNT(*) FROM official');
+            $accountCount = $connection->fetchOne('SELECT COUNT(*) FROM wechat_public_account');
+            echo "   official表记录数: {$officialCount}\n";
+            echo "   wechat_public_account表记录数: {$accountCount}\n";
+
+        } catch (Exception $e) {
+            echo "   ❌ 数据库连接失败: " . $e->getMessage() . "\n";
+        }
+
+        // 5. 检查服务容器
+        echo "\n5. 关键服务检查:\n";
+        $services = [
+            'App\Service\WechatApiService' => '微信API服务',
+            'App\Service\WechatArticleSyncService' => '微信文章同步服务',
+            'App\Service\DistributedLockService' => '分布式锁服务',
+            'App\Repository\WechatPublicAccountRepository' => '公众号仓库',
+            'App\Repository\OfficialRepository' => '文章仓库'
+        ];
+
+        foreach ($services as $serviceId => $serviceName) {
+            try {
+                if ($container->has($serviceId)) {
+                    $service = $container->get($serviceId);
+                    echo "   {$serviceName}: ✅\n";
+                } else {
+                    echo "   {$serviceName}: ❌ 未注册\n";
+                }
+            } catch (Exception $e) {
+                echo "   {$serviceName}: ❌ 错误 - " . $e->getMessage() . "\n";
+            }
+        }
+
+        // 6. 检查公众号数据
+        echo "\n6. 公众号数据检查:\n";
+        try {
+            $accountRepository = $container->get('App\Repository\WechatPublicAccountRepository');
+            $accounts = $accountRepository->findAll();
+
+            echo "   找到账户数量: " . count($accounts) . "\n";
+
+            if (!empty($accounts)) {
+                foreach ($accounts as $account) {
+                    echo "   账户 ID: " . $account->getId() . "\n";
+                    echo "   账户名称: " . ($account->getName() ?: '未设置') . "\n";
+                    echo "   账户状态: " . ($account->isActive() ? '激活' : '未激活') . "\n";
+                    echo "   AppId: " . ($account->getAppId() ? substr($account->getAppId(), 0, 8) . '...' : '未设置') . "\n";
+                    echo "   AppSecret: " . ($account->getAppSecret() ? '已设置' : '未设置') . "\n";
+
+                    // 检查是否有完整的配置
+                    if ($account->getAppId() && $account->getAppSecret() && $account->isActive()) {
+                        echo "   账户配置: ✅ 完整\n";
+                    } else {
+                        echo "   账户配置: ❌ 不完整\n";
+                        if (!$account->getAppId()) echo "      - 缺少AppId\n";
+                        if (!$account->getAppSecret()) echo "      - 缺少AppSecret\n";
+                        if (!$account->isActive()) echo "      - 账户未激活\n";
+                    }
+                    echo "\n";
+                }
+            } else {
+                echo "   ❌ 没有找到公众号账户数据\n";
+            }
+        } catch (Exception $e) {
+            echo "   ❌ 公众号数据检查失败: " . $e->getMessage() . "\n";
+        }
+
+        // 7. 尝试测试微信API连接
+        echo "\n7. 微信API连接测试:\n";
+        try {
+            if (!empty($accounts)) {
+                $testAccount = null;
+                foreach ($accounts as $account) {
+                    if ($account->isActive() && $account->getAppId() && $account->getAppSecret()) {
+                        $testAccount = $account;
+                        break;
+                    }
+                }
+
+                if ($testAccount) {
+                    echo "   使用账户进行API测试: " . $testAccount->getId() . "\n";
+
+                    $wechatApiService = $container->get('App\Service\WechatApiService');
+                    $accessToken = $wechatApiService->getAccessToken($testAccount);
+
+                    if ($accessToken) {
+                        echo "   ✅ 获取access_token成功\n";
+                        echo "   Token长度: " . strlen($accessToken) . "\n";
+
+                        // 测试获取文章列表
+                        echo "   测试获取已发布文章...\n";
+                        $articles = $wechatApiService->getAllPublishedArticles($accessToken, 1, 0);
+
+                        if ($articles !== null) {
+                            echo "   ✅ 获取文章列表成功\n";
+                            echo "   文章数量: " . count($articles) . "\n";
+                        } else {
+                            echo "   ⚠️ 获取文章列表失败或无数据\n";
+                        }
+
+                    } else {
+                        echo "   ❌ 获取access_token失败\n";
+                        echo "   可能原因:\n";
+                        echo "      - AppId或AppSecret错误\n";
+                        echo "      - 网络连接问题\n";
+                        echo "      - 公众号权限不足\n";
+                        echo "      - API调用限制\n";
+                    }
+                } else {
+                    echo "   ❌ 没有找到配置完整的公众号账户\n";
+                }
+            } else {
+                echo "   ❌ 没有公众号账户可测试\n";
+            }
+        } catch (Exception $e) {
+            echo "   ❌ 微信API测试失败: " . $e->getMessage() . "\n";
+        }
+
+        // 8. 检查日志文件
+        echo "\n8. 日志文件检查:\n";
+        $logFiles = [
+            'var/log/prod.log' => '生产日志',
+            'var/log/dev.log' => '开发日志',
+            'var/log/wechat.log' => '微信日志',
+            'var/log/error.log' => '错误日志'
+        ];
+
+        foreach ($logFiles as $logFile => $logName) {
+            $fullPath = __DIR__ . '/../' . $logFile;
+            if (file_exists($fullPath)) {
+                $size = filesize($fullPath);
+                $modified = date('Y-m-d H:i:s', filemtime($fullPath));
+                $writable = is_writable($fullPath) ? '✅' : '❌';
+                echo "   {$logName}: {$writable}, 大小: {$size} bytes, 修改时间: {$modified}\n";
+
+                // 如果是错误日志，显示最近的错误
+                if (strpos($logFile, 'error') !== false && $size > 0) {
+                    $lines = file($fullPath);
+                    $recentErrors = array_slice($lines, -5); // 最近5行
+                    echo "   最近错误:\n";
+                    foreach ($recentErrors as $line) {
+                        if (strpos($line, 'ERROR') !== false || strpos($line, 'Exception') !== false) {
+                            echo "      " . trim($line) . "\n";
+                        }
+                    }
+                }
+            } else {
+                echo "   {$logName}: ❌ 不存在\n";
+            }
+        }
+
+    } catch (Exception $e) {
+        echo "   ❌ Symfony容器启动失败: " . $e->getMessage() . "\n";
+        echo "   这可能是环境配置问题\n";
+    }
+
+    echo "\n=== 诊断总结 ===\n";
+
+    echo "如果同步接口仍显示'同步完成，但存在错误'，可能的原因:\n\n";
+
+    echo "🔴 高优先级问题:\n";
+    echo "1. 微信API配置问题 (AppId/AppSecret错误或权限不足)\n";
+    echo "2. 网络连接问题 (无法访问微信API)\n";
+    echo "3. 公众号权限问题 (未认证或API权限不足)\n\n";
+
+    echo "🟡 中优先级问题:\n";
+    echo "4. 数据库权限问题 (写入权限不足)\n";
+    echo "5. 分布式锁问题 (锁表损坏或锁定异常)\n";
+    echo "6. 内存或时间限制问题\n\n";
+
+    echo "🟢 低优先级问题:\n";
+    echo "7. 日志写入权限问题\n";
+    echo "8. 缓存目录权限问题\n\n";
+
+    echo "💡 建议的解决步骤:\n";
+    echo "1. 验证微信公众平台的AppId和AppSecret是否正确\n";
+    echo "2. 确认公众号已认证并有素材管理权限\n";
+    echo "3. 检查服务器网络是否能访问微信API\n";
+    echo "4. 查看详细的错误日志文件\n";
+    echo "5. 检查数据库用户的写入权限\n";
+
+} catch (Exception $e) {
+    echo "❌ 诊断过程发生严重错误: " . $e->getMessage() . "\n";
+    echo "堆栈跟踪:\n" . $e->getTraceAsString() . "\n";
+}
+
+echo "\n=== 诊断完成 ===\n";

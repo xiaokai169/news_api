@@ -170,4 +170,61 @@ class OfficialRepository extends ServiceEntityRepository
             ->getQuery()
             ->getSingleScalarResult();
     }
+
+    /**
+     * 根据公众号ID统计文章总数
+     */
+    public function countByAccountId(string $accountId): int
+    {
+        return (int) $this->createQueryBuilder('o')
+            ->select('COUNT(o.id)')
+            ->where('o.wechatAccountId = :accountId')
+            ->setParameter('accountId', $accountId)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    /**
+     * 根据公众号ID统计活跃文章数
+     */
+    public function countActiveByAccountId(string $accountId): int
+    {
+        return (int) $this->createQueryBuilder('o')
+            ->select('COUNT(o.id)')
+            ->where('o.wechatAccountId = :accountId')
+            ->andWhere('o.status = :activeStatus')
+            ->setParameter('accountId', $accountId)
+            ->setParameter('activeStatus', 1)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    /**
+     * 获取公众号最后同步时间
+     */
+    public function getLastSyncTime(string $accountId): ?\DateTime
+    {
+        $result = $this->createQueryBuilder('o')
+            ->select('MAX(o.updatedAt)')
+            ->where('o.wechatAccountId = :accountId')
+            ->setParameter('accountId', $accountId)
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        return $result ? new \DateTime($result) : null;
+    }
+
+    /**
+     * 获取公众号最近的文章
+     */
+    public function findRecentByAccountId(string $accountId, int $limit = 5): array
+    {
+        return $this->createQueryBuilder('o')
+            ->where('o.wechatAccountId = :accountId')
+            ->setParameter('accountId', $accountId)
+            ->orderBy('o.updatedAt', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
 }

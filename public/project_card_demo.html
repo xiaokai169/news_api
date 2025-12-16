@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>项目管理 - 项目卡片演示</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Liberation Sans', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .project-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .project-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        .project-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .project-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 12px;
+            line-height: 1.3;
+            min-height: 2.6rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .project-log {
+            font-size: 0.85rem;
+            color: #718096;
+            margin-bottom: 15px;
+            line-height: 1.4;
+            min-height: 2.8rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .info-grid {
+            display: grid;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+        }
+
+        .info-label {
+            color: #718096;
+            font-weight: 500;
+        }
+
+        .info-value {
+            color: #2d3748;
+            font-weight: 600;
+            text-align: right;
+        }
+
+        .cost-section {
+            border-top: 1px solid #e2e8f0;
+            padding-top: 12px;
+            margin-top: 12px;
+        }
+
+        .cost-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            margin-bottom: 6px;
+        }
+
+        .total-cost {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-edit {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-edit:hover {
+            background: #38a169;
+            transform: translateY(-1px);
+        }
+
+        .btn-delete {
+            background: #f56565;
+            color: white;
+        }
+
+        .btn-delete:hover {
+            background: #e53e3e;
+            transform: translateY(-1px);
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 1400px) {
+            .projects-grid {
+                grid-template-columns: repeat(5, 1fr);
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .projects-grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 16px;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .projects-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 16px;
+            }
+
+            .header h1 {
+                font-size: 2.2rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .projects-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 16px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            body {
+                padding: 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .projects-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .header h1 {
+                font-size: 1.8rem;
+            }
+
+            .project-card {
+                padding: 16px;
+            }
+        }
+
+        /* 加载动画 */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .project-card {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .project-card:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        .project-card:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .project-card:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+
+        .project-card:nth-child(4) {
+            animation-delay: 0.4s;
+        }
+
+        .project-card:nth-child(5) {
+            animation-delay: 0.5s;
+        }
+
+        .project-card:nth-child(6) {
+            animation-delay: 0.6s;
+        }
+
+        .project-card:nth-child(7) {
+            animation-delay: 0.7s;
+        }
+
+        .project-card:nth-child(8) {
+            animation-delay: 0.8s;
+        }
+
+        .project-card:nth-child(9) {
+            animation-delay: 0.9s;
+        }
+
+        .project-card:nth-child(10) {
+            animation-delay: 1.0s;
+        }
+
+        .project-card:nth-child(11) {
+            animation-delay: 1.1s;
+        }
+
+        .project-card:nth-child(12) {
+            animation-delay: 1.2s;
+        }
+
+        .demo-info {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="demo-info">
+            <h2>🎯 ProjectCard 页面演示</h2>
+            <p>这是一个独立的演示页面，展示ProjectCard的设计效果</p>
+            <p><strong>访问路径:</strong> 在Symfony环境中访问 <code>/projects</code> 路由</p>
+        </div>
+
+        <div class="header">
+            <h1>项目管理中心</h1>
+            <p>全面掌握所有项目的进展情况</p>
+        </div>
+
+        <div class="projects-grid">
+            <!-- 项目卡片 1 -->
+            <div class="project-card">
+                <div class="project-name">官网重构项目</div>
+                <div class="project-log">项目进展顺利，前端开发完成80%</div>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">负责人:</span>
+                        <span class="info-value">张三</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">团队人数:</span>
+                        <span class="info-value">5人</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">开始日期:</span>
+                        <span class="info-value">2024-01-15</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">结束日期:</span>
+                        <span class="info-value">2024-06-30</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">投入工时:</span>
+                        <span class="info-value">1200小时</span>
+                    </div>
+                </div>
+                <div class="cost-section">
+                    <div class="cost-item">
+                        <span class="info-label">人员支出:</span>
+                        <span class="info-value">¥150,000</span>
+                    </div>
+                    <div class="cost-item">
+                        <span class="info-label">采购支出:</span>
+                        <span class="info-value">¥25,000</span>
+                    </div>
+                    <div class="total-cost">
+                        <span>总支出</span>
+                        <span>¥175,000</span>
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-edit" onclick="editProject(1)">编辑</button>
+                    <button class="btn btn-delete" onclick="deleteProject(1)">删除</button>
+                </div>
+            </div>
+
+            <!-- 项目卡片 2 -->
+            <div class="project-card">
+                <div class="project-name">移动端APP开发</div>
+                <div class="project-log">完成UI设计，开始后端API开发</div>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">负责人:</span>
+                        <span class="info-value">李四</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">团队人数:</span>
+                        <span class="info-value">8人</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">开始日期:</span>
+                        <span class="info-value">2024-02-01</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">结束日期:</span>
+                        <span class="info-value">2024-08-31</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">投入工时:</span>
+                        <span class="info-value">1800小时</span>
+                    </div>
+                </div>
+                <div class="cost-section">
+                    <div class="cost-item">
+                        <span class="info-label">人员支出:</span>
+                        <span class="info-value">¥280,000</span>
+                    </div>
+                    <div class="cost-item">
+                        <span class="info-label">采购支出:</span>
+                        <span class="info-value">¥45,000</span>
+                    </div>
+                    <div class="total-cost">
+                        <span>总支出</span>
+                        <span>¥325,000</span>
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-edit" onclick="editProject(2)">编辑</button>
+                    <button class="btn btn-delete" onclick="deleteProject(2)">删除</button>
+                </div>
+            </div>
+
+            <!-- 项目卡片 3 -->
+            <div class="project-card">
+                <div class="project-name">数据分析平台</div>
+                <div class="project-log">需求分析完成，技术方案确定</div>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">负责人:</span>
+                        <span class="info-value">王五</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">团队人数:</span>
+                        <span class="info-value">6人</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">开始日期:</span>
+                        <span class="info-value">2024-03-01</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">结束日期:</span>
+                        <span class="info-value">无</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">投入工时:</span>
+                        <span class="info-value">900小时</span>
+                    </div>
+                </div>
+                <div class="cost-section">
+                    <div class="cost-item">
+                        <span class="info-label">人员支出:</span>
+                        <span class="info-value">¥180,000</span>
+                    </div>
+                    <div class="cost-item">
+                        <span class="info-label">采购支出:</span>
+                        <span class="info-value">¥35,000</span>
+                    </div>
+                    <div class="total-cost">
+                        <span>总支出</span>
+                        <span>¥215,000</span>
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-edit" onclick="editProject(3)">编辑</button>
+                    <button class="btn btn-delete" onclick="deleteProject(3)">删除</button>
+                </div>
+            </div>
+
+            <!-- 项目卡片 4 -->
+            <div class="project-card">
+                <div class="project-name">客户管理系统</div>
+                <div class="project-log">数据库设计完成，开始前端开发</div>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">负责人:</span>
+                        <span class="info-value">赵六</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">团队人数:</span>
+                        <span class="info-value">4人</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">开始日期:</span>
+                        <span class="info-value">2024-01-20</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">结束日期:</span>
+                        <span class="info-value">2024-05-15</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">投入工时:</span>
+                        <span class="info-value">750小时</span>
+                    </div>
+                </div>
+                <div class="cost-section">
+                    <div class="cost-item">
+                        <span class="info-label">人员支出:</span>
+                        <span class="info-value">¥120,000</span>
+                    </div>
+                    <div class="cost-item">
+                        <span class="info-label">采购支出:</span>
+                        <span class="info-value">¥15,000</span>
+                    </div>
+                    <div class="total-cost">
+                        <span>总支出</span>
+                        <span>¥135,000</span>
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-edit" onclick="editProject(4)">编辑</button>
+                    <button class="btn btn-delete" onclick="deleteProject(4)">删除</button>
+                </div>
+            </div>
+
+            <!-- 项目卡片 5 -->
+            <div class="project-card">
+                <div class="project-name">电商平台升级</div>
+                <div class="project-log">性能优化完成，正在进行测试</div>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">负责人:</span>
+                        <span class="info-value">钱七</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">团队人数:</span>
+                        <span class="info-value">7人</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">开始日期:</span>
+                        <span class="info-value">2024-02-15</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">结束日期:</span>
+                        <span class="info-value">2024-07-30</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">投入工时:</span>
+                        <span class="info-value">1400小时</span>
+                    </div>
+                </div>
+                <div class="cost-section">
+                    <div class="cost-item">
+                        <span class="info-label">人员支出:</span>
+                        <span class="info-value">¥210,000</span>
+                    </div>
+                    <div class="cost-item">
+                        <span class="info-label">采购支出:</span>
+                        <span class="info-value">¥30,000</span>
+                    </div>
+                    <div class="total-cost">
+                        <span>总支出</span>
+                        <span>¥240,000</span>
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-edit" onclick="editProject(5)">编辑</button>
+                    <button class="btn btn-delete" onclick="deleteProject(5)">删除</button>
+                </div>
+            </div>
+
+            <!-- 项目卡片 6 -->
+            <div class="project-card">
+                <div class="project-name">AI智能客服</div>
+                <div class="project-log">模型训练完成，集成测试中</div>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">负责人:</span>
+                        <span class="info-value">孙八</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">团队人数:</span>
+                        <span class="info-value">5人</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">开始日期:</span>
+                        <span class="info-value">2024-03-10</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">结束日期:</span>
+                        <span class="info-value">2024-09-30</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">投入工时:</span>
+                        <span class="info-value">1100小时</span>
+                    </div>
+                </div>
+                <div class="cost-section">
+                    <div class="cost-item">
+                        <span class="info-label">人员支出:</span>
+                        <span class="info-value">¥165,000</span>
+                    </div>
+                    <div class="cost-item">
+                        <span class="info-label">采购支出:</span>
+                        <span class="info-value">¥50,000</span>
+                    </div>
+                    <div class="total-cost">
+                        <span>总支出</span>
+                        <span>¥215,000</span>
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-edit" onclick="editProject(6)">编辑</button>
+                    <button class="btn btn-delete" onclick="deleteProject(6)">删除</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function editProject(id) {
+            console.log('编辑项目:', id);
+            alert('编辑项目 ID: ' + id);
+        }
+
+        function deleteProject(id) {
+            if (confirm('确定要删除这个项目吗？')) {
+                console.log('删除项目:', id);
+                alert('项目已删除 ID: ' + id);
+            }
+        }
+
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log('项目卡片页面加载完成');
+        });
+    </script>
+</body>
+
+</html>

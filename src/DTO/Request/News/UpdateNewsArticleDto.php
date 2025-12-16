@@ -128,7 +128,7 @@ class UpdateNewsArticleDto extends AbstractRequestDto
     /**
      * 原文链接
      */
-    #[Assert\Url(message: '原文链接必须是有效的URL')]
+    // #[Assert\Url(message: '原文链接必须是有效的URL')] // 移除URL验证约束
     #[OA\Property(
         description: '原文链接',
         example: 'https://example.com/updated-original-article'
@@ -364,10 +364,10 @@ class UpdateNewsArticleDto extends AbstractRequestDto
             }
         }
 
-        // 验证URL格式
-        if ($this->originalUrl !== null && !$this->validateUrl($this->originalUrl)) {
-            $errors['originalUrl'] = '原文链接格式不正确';
-        }
+        // 验证URL格式 - 已移除originalUrl的URL验证
+        // if ($this->originalUrl !== null && !$this->validateUrl($this->originalUrl)) {
+        //     $errors['originalUrl'] = '原文链接格式不正确';
+        // }
 
         if ($this->cover !== null && !$this->validateUrl($this->cover)) {
             $errors['cover'] = '封面图链接格式不正确';

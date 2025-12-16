@@ -1,0 +1,133 @@
+framework:
+    messenger:
+        # 默认传输方式
+        default_bus: messenger.bus.default
+
+        # 传输配置
+        transports:
+            # 同步传输（用于测试和开发）
+            sync: 'sync://'
+
+            # Redis传输（用于生产环境）
+            async:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                options:
+                    # Redis连接选项
+                    stream: tcp
+                    # 连接超时
+                    timeout: 5
+                    # 读取超时
+                    read_timeout: 10
+                    # 持久连接
+                    persistent: true
+                    # 数据库索引
+                    db: 0
+                    # 队列前缀
+                    prefix: 'messenger'
+                # 重试策略
+                retry_strategy:
+                    max_retries: 3
+                    delay: 1000 # 1秒
+                    multiplier: 2
+                    max_delay: 30000 # 30秒
+
+            # 高优先级队列
+            high_priority:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                options:
+                    stream: tcp
+                    timeout: 5
+                    read_timeout: 10
+                    persistent: true
+                    db: 0
+                    prefix: 'messenger'
+                    # 队列名称
+                    queue_name: 'high_priority'
+                retry_strategy:
+                    max_retries: 3
+                    delay: 500
+                    multiplier: 2
+                    max_delay: 10000
+
+            # 微信同步队列
+            wechat_sync:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                options:
+                    stream: tcp
+                    timeout: 5
+                    read_timeout: 10
+                    persistent: true
+                    db: 0
+                    prefix: 'messenger'
+                    queue_name: 'wechat_sync'
+                retry_strategy:
+                    max_retries: 3
+                    delay: 2000
+                    multiplier: 2
+                    max_delay: 60000
+
+            # 媒体处理队列
+            media_process:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                options:
+                    stream: tcp
+                    timeout: 5
+                    read_timeout: 10
+                    persistent: true
+                    db: 0
+                    prefix: 'messenger'
+                    queue_name: 'media_process'
+                retry_strategy:
+                    max_retries: 2
+                    delay: 5000
+                    multiplier: 2
+                    max_delay: 120000
+
+            # 批量处理队列
+            batch_process:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                options:
+                    stream: tcp
+                    timeout: 5
+                    read_timeout: 10
+                    persistent: true
+                    db: 0
+                    prefix: 'messenger'
+                    queue_name: 'batch_process'
+                retry_strategy:
+                    max_retries: 1
+                    delay: 1000
+                    multiplier: 1
+                    max_delay: 5000
+
+            # 失败队列（死信队列）
+            failed:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                options:
+                    stream: tcp
+                    timeout: 5
+                    read_timeout: 10
+                    persistent: true
+                    db: 0
+                    prefix: 'messenger'
+                    queue_name: 'failed'
+
+        # 路由配置
+        routing:
+            # 将消息路由到相应的传输（暂时使用同步传输）
+            'App\Message\WechatSyncMessage': sync
+
+# 当使用Doctrine时，需要配置消息存储
+# doctrine:
+#     dbal:
+#         # 为消息表配置连接
+#         connections:
+#             messenger:
+#                 url: '%env(resolve:MESSENGER_DOCTRINE_DSN)%'
+#     orm:
+#         # 为消息实体配置实体管理器
+#         entity_managers:
+#             messenger:
+#                 connection: messenger
+#                 mapping:
+#                     App\Entity\Message\: App/Entity/Message

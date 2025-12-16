@@ -1,0 +1,309 @@
+/**
+ * 微信编辑器图片样式定义
+ * 包含微信编辑器的原始样式、响应式设计和懒加载动画
+ */
+
+/* ===== 基础样式重置 ===== */
+.rich_pages {
+    line-height: 1.6;
+    font-size: 16px;
+    color: #333;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+/* ===== 微信编辑器图片基础样式 ===== */
+.rich_pages img,
+.wxw-img,
+.js_insertlocalimg {
+    display: block;
+    max-width: 100% !important;
+    height: auto !important;
+    margin: 15px auto;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+/* 微信编辑器特定样式 */
+.rich_pages {
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+.rich_pages img {
+    vertical-align: middle;
+    border: 0;
+}
+
+/* ===== 懒加载状态样式 ===== */
+.img-loading {
+    opacity: 0.7;
+    filter: blur(2px);
+    background: #f5f5f5 url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiBmaWxsPSJub25lIiBzdHJva2U9IiNkZGQiIHN0cm9rZS13aWR0aD0iMyIgc3Ryb2tlLWRhc2hhcnJheT0iMS41IDEuNSIgcm90YXRlPSIwIj4KICAgIDxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InJvdGF0ZSIgZnJvbT0iMCAyMCAyMCIgdG89IjM2MCAyMCAyMCIgZHVyPSIxcyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KICA8L2NpcmNsZT4KPC9zdmc+') center no-repeat;
+    background-size: 40px 40px;
+}
+
+.img-loaded {
+    opacity: 1;
+    filter: blur(0);
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+.img-error {
+    opacity: 0.8;
+    filter: grayscale(100%);
+    border: 2px dashed #ff6b6b;
+}
+
+/* ===== 加载动画 ===== */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 0.7;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+
+.img-loading {
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* ===== 响应式设计 ===== */
+@media (max-width: 768px) {
+    .rich_pages img,
+    .wxw-img,
+    .js_insertlocalimg {
+        margin: 10px auto;
+        border-radius: 2px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .rich_pages {
+        font-size: 15px;
+        line-height: 1.5;
+    }
+}
+
+@media (max-width: 480px) {
+    .rich_pages img,
+    .wxw-img,
+    .js_insertlocalimg {
+        margin: 8px auto;
+        border-radius: 1px;
+    }
+
+    .rich_pages {
+        font-size: 14px;
+        line-height: 1.4;
+    }
+}
+
+/* ===== 图片悬停效果 ===== */
+.rich_pages img:hover,
+.wxw-img:hover,
+.js_insertlocalimg:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+}
+
+/* ===== 图片点击放大效果 ===== */
+.rich_pages img.img-zoom,
+.wxw-img.img-zoom,
+.js_insertlocalimg.img-zoom {
+    cursor: zoom-in;
+    position: relative;
+}
+
+/* ===== 图片容器样式 ===== */
+.img-container {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+    margin: 15px 0;
+}
+
+.img-container .img-caption {
+    text-align: center;
+    font-size: 12px;
+    color: #666;
+    margin-top: 5px;
+    line-height: 1.4;
+}
+
+/* ===== 错误状态增强样式 ===== */
+.img-error::after {
+    content: "点击重新加载";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 255, 255, 0.9);
+    color: #ff6b6b;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.img-error:hover::after {
+    opacity: 1;
+}
+
+/* ===== 微信编辑器特殊样式处理 ===== */
+/* 处理微信编辑器中的图片对齐 */
+.rich_pages .aligncenter {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+}
+
+.rich_pages .alignleft {
+    float: left;
+    margin: 0 15px 15px 0;
+}
+
+.rich_pages .alignright {
+    float: right;
+    margin: 0 0 15px 15px;
+}
+
+/* 处理微信编辑器中的图片尺寸 */
+.rich_pages img[style*="width"] {
+    max-width: 100% !important;
+    height: auto !important;
+}
+
+/* ===== 微信编辑器内容区域样式 ===== */
+.rich_pages p {
+    margin: 1em 0;
+    text-align: justify;
+}
+
+.rich_pages blockquote {
+    border-left: 4px solid #ddd;
+    margin: 1em 0;
+    padding-left: 1em;
+    color: #666;
+}
+
+.rich_pages a {
+    color: #576b95;
+    text-decoration: none;
+}
+
+.rich_pages a:hover {
+    text-decoration: underline;
+}
+
+/* ===== 图片懒加载进度指示器 ===== */
+.lazy-loading-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #4CAF50, #2196F3, #FF9800);
+    background-size: 200% 100%;
+    animation: loadingProgress 2s linear infinite;
+    border-radius: 0 0 4px 4px;
+}
+
+@keyframes loadingProgress {
+    0% {
+        background-position: 0% 0%;
+        width: 0%;
+    }
+    50% {
+        width: 70%;
+    }
+    100% {
+        background-position: 200% 0%;
+        width: 100%;
+    }
+}
+
+/* ===== 高对比度和无障碍支持 ===== */
+@media (prefers-reduced-motion: reduce) {
+    .rich_pages img,
+    .wxw-img,
+    .js_insertlocalimg {
+        transition: none;
+    }
+
+    .img-loading {
+        animation: none;
+    }
+}
+
+@media (prefers-contrast: high) {
+    .rich_pages img,
+    .wxw-img,
+    .js_insertlocalimg {
+        border: 1px solid #000;
+    }
+
+    .img-error {
+        border-color: #ff0000;
+    }
+}
+
+/* ===== 打印样式 ===== */
+@media print {
+    .rich_pages img,
+    .wxw-img,
+    .js_insertlocalimg {
+        max-width: 100% !important;
+        height: auto !important;
+        page-break-inside: avoid;
+        box-shadow: none;
+    }
+
+    .img-loading,
+    .img-error {
+        display: none;
+    }
+}
+
+/* ===== 深色模式支持 ===== */
+@media (prefers-color-scheme: dark) {
+    .rich_pages {
+        color: #e0e0e0;
+        background: #1a1a1a;
+    }
+
+    .rich_pages img,
+    .wxw-img,
+    .js_insertlocalimg {
+        box-shadow: 0 2px 8px rgba(255, 255, 255, 0.1);
+    }
+
+    .img-error {
+        border-color: #ff5252;
+        background: #2d1b1b;
+    }
+
+    .rich_pages blockquote {
+        color: #b0b0b0;
+        border-left-color: #555;
+    }
+
+    .rich_pages a {
+        color: #90caf9;
+    }
+}

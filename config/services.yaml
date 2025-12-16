@@ -4,6 +4,28 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
+    # 异步任务队列配置
+    ASYNC_TASK_DEFAULT_TTL: 3600
+    ASYNC_TASK_BATCH_SIZE: 10
+    ASYNC_TASK_TIMEOUT: 300
+
+    # 消息队列配置
+    MESSENGER_TRANSPORT_DSN: '%env(string:MESSENGER_TRANSPORT_DSN)%'
+
+    # 性能优化配置
+    PERFORMANCE_CACHE_DEFAULT_TTL: 3600
+    PERFORMANCE_BATCH_SIZE: 100
+    PERFORMANCE_MAX_CONCURRENT_TASKS: 10
+    PERFORMANCE_MEMORY_THRESHOLD: 80
+    PERFORMANCE_CACHE_HIT_RATE_THRESHOLD: 70
+
+    # 监控和日志配置
+    MONITORING_HEALTH_CHECK_INTERVAL: 60
+    MONITORING_METRICS_RETENTION_DAYS: 30
+    LOGGING_RETENTION_DAYS: 90
+    LOGGING_ARCHIVE_ENABLED: true
+    LOGGING_CLEANUP_ENABLED: true
+
 
 services:
     # default configuration for services in *this* file
@@ -39,3 +61,33 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+
+    # 消息处理器
+    App\MessageHandler\WechatSyncMessageHandler: ~
+
+    # 分布式锁服务（用于任务队列）
+    App\Service\DistributedLockService: ~
+
+    # 监控服务
+    App\Service\MonitoringService:
+        arguments:
+            $entityManager: '@doctrine.orm.default_entity_manager'
+            $logger: '@logger'
+            $cache: '@cache.app'
+            $parameterBag: '@parameter_bag'
+
+    # 日志管理服务
+    App\Service\LoggingService:
+        arguments:
+            $entityManager: '@doctrine.orm.default_entity_manager'
+            $logger: '@logger'
+            $cache: '@cache.app'
+            $parameterBag: '@parameter_bag'
+
+    # 华为云存储配置
+    Siganushka\MediaBundle\Storage\HuaweiObsStorage:
+        $accessKeyId: '%env(string:OBS_KEYID)%'
+        $accessKeySecret: '%env(string:OBS_KEYSECRET)%'
+        $endpoint: '%env(string:OBS_ENDPOINT)%'
+        $bucket: '%env(string:OBS_BUCKET)%'
+        $options: { prefix_dir: 'official_website' }

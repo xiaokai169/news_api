@@ -890,7 +890,9 @@ abstract class AbstractFilterDto extends AbstractDto
         }
 
         if (isset($data['status'])) {
-            $this->setStatus(is_array($data['status']) ? $data['status'] : [(int)$data['status']]);
+            if ($data['status'] !== null && $data['status'] !== '') {
+                $this->setStatus(is_array($data['status']) ? $data['status'] : [(int)$data['status']]);
+            }
         }
 
         // 设置日期范围
@@ -951,48 +953,60 @@ abstract class AbstractFilterDto extends AbstractDto
     {
         $criteria = [];
 
-        // 基础过滤条件
-        if (!empty($this->merchantId)) {
-            $criteria['merchantId'] = $this->merchantId;
-        }
-
-        if (!empty($this->userId)) {
-            $criteria['userId'] = $this->userId;
-        }
-
-        if ($this->status !== null) {
+        // 状态过滤
+        if (!empty($this->status)) {
             $criteria['status'] = $this->status;
         }
 
-        if ($this->isRecommend !== null) {
-            $criteria['isRecommend'] = $this->isRecommend;
+        // ID过滤
+        if (!empty($this->ids)) {
+            $criteria['id'] = $this->ids;
         }
 
-        if (!empty($this->categoryCode)) {
-            $criteria['categoryCode'] = $this->categoryCode;
+        // 排除ID过滤
+        if (!empty($this->excludeIds)) {
+            $criteria['id NOT IN'] = $this->excludeIds;
         }
 
-        // 搜索条件
-        if (!empty($this->name)) {
-            $criteria['name'] = $this->name;
-        }
-
-        if (!empty($this->userName)) {
-            $criteria['userName'] = $this->userName;
-        }
-
-        // 发布状态过滤
-        if (!empty($this->publishStatus)) {
-            $criteria['publishStatus'] = $this->publishStatus;
+        // 关键词搜索
+        if (!empty($this->keyword) && !empty($this->searchFields)) {
+            $orConditions = [];
+            foreach ($this->searchFields as $field) {
+                $orConditions[$field . ' LIKE'] = '%' . $this->keyword . '%';
+            }
+            if (!empty($orConditions)) {
+                $criteria['OR'] = $orConditions;
+            }
         }
 
         // 日期范围过滤
-        if (!empty($this->startDate)) {
-            $criteria['startDate'] = $this->startDate;
+        if (!empty($this->dateFrom)) {
+            $criteria['createdAt >='] = $this->dateFrom;
         }
 
-        if (!empty($this->endDate)) {
-            $criteria['endDate'] = $this->endDate;
+        if (!empty($this->dateTo)) {
+            $criteria['createdAt <='] = $this->dateTo;
+        }
+
+        if (!empty($this->createdAtFrom)) {
+            $criteria['createdAt >='] = $this->createdAtFrom;
+        }
+
+        if (!empty($this->createdAtTo)) {
+            $criteria['createdAt <='] = $this->createdAtTo;
+        }
+
+        if (!empty($this->updatedAtFrom)) {
+            $criteria['updatedAt >='] = $this->updatedAtFrom;
+        }
+
+        if (!empty($this->updatedAtTo)) {
+            $criteria['updatedAt <='] = $this->updatedAtTo;
+        }
+
+        // 自定义过滤条件
+        if (!empty($this->customFilters)) {
+            $criteria = array_merge($criteria, $this->customFilters);
         }
 
         return $criteria;

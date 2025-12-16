@@ -385,30 +385,56 @@ class WechatApiService
     {
         $articles = [];
 
-        if (!isset($item['content']) || !isset($item['content']['item'])) {
+        if (!isset($item['content'])) {
+            $this->logger->warning('已发布消息项缺少content字段', ['item' => array_keys($item)]);
             return $articles;
         }
 
-        $articleId = $item['article_id'] ?? '';
-        $publishTime = $item['publish_time'] ?? time();
+        $content = $item['content'];
 
-        // 已发布消息的content字段包含item数组，每个item是一篇文章
-        foreach ($item['content']['item'] as $contentItem) {
+        // 支持两种数据结构：news_item (素材) 和 item (已发布消息)
+        $newsItems = null;
+
+        if (isset($content['news_item'])) {
+            // 素材数据结构
+            $newsItems = $content['news_item'];
+            $this->logger->debug('使用news_item结构提取文章', ['count' => count($newsItems)]);
+        } elseif (isset($content['item'])) {
+            // 已发布消息数据结构
+            $newsItems = $content['item'];
+            $this->logger->debug('使用item结构提取文章', ['count' => count($newsItems)]);
+        } else {
+            $this->logger->warning('content字段中未找到news_item或item', ['content_keys' => array_keys($content)]);
+            return $articles;
+        }
+
+        $mediaId = $item['media_id'] ?? '';
+        $articleId = $item['article_id'] ?? $mediaId; // 优先使用article_id，否则使用media_id
+        $publishTime = $item['publish_time'] ?? $item['update_time'] ?? time();
+
+        foreach ($newsItems as $newsItem) {
+            // 为每篇文章生成唯一的article_id
+            $uniqueArticleId = $articleId . '_' . ($newsItem['title'] ?? md5(serialize($newsItem)));
+
             $articles[] = [
-                'article_id' => $articleId,
+                'article_id' => $uniqueArticleId,
+                'media_id' => $mediaId,
                 'publish_time' => $publishTime,
-                'title' => $contentItem['title'] ?? '',
-                'author' => $contentItem['author'] ?? '',
-                'digest' => $contentItem['digest'] ?? '',
-                'content' => $contentItem['content'] ?? '',
-                'content_source_url' => $contentItem['content_source_url'] ?? '',
-                'thumb_media_id' => $contentItem['thumb_media_id'] ?? '',
-                'show_cover_pic' => $contentItem['show_cover_pic'] ?? 0,
-                'url' => $contentItem['url'] ?? '',
-                'thumb_url' => $contentItem['thumb_url'] ?? '',
+                'update_time' => $item['update_time'] ?? null,
+                'title' => $newsItem['title'] ?? '',
+                'author' => $newsItem['author'] ?? '',
+                'digest' => $newsItem['digest'] ?? '',
+                'content' => $newsItem['content'] ?? '',
+                'content_source_url' => $newsItem['content_source_url'] ?? '',
+                'thumb_media_id' => $newsItem['thumb_media_id'] ?? '',
+                'show_cover_pic' => $newsItem['show_cover_pic'] ?? 0,
+                'need_open_comment' => $newsItem['need_open_comment'] ?? 0,
+                'url' => $newsItem['url'] ?? '',
+                'thumb_url' => $newsItem['thumb_url'] ?? '',
             ];
         }
 
+        $this->logger->debug('成功提取文章数据', ['extracted_count' => count($articles)]);
         return $articles;
     }
 

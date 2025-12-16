@@ -71,7 +71,13 @@ readonly class ApiResponse
             'pages' => $pages,
         ];
         // 分页查询成功返回 200 OK
-        return $this->success($data, Response::HTTP_OK, $context, [], $request);
+        return $this->success(
+            data: $data,
+            status: Response::HTTP_OK,
+            context: $context,
+            headers: [],
+            request: $request
+        );
     }
 
     public function error(string $message, int $status = Response::HTTP_BAD_REQUEST, ?array $details = null, ?Request $request = null, array $headers = []): JsonResponse

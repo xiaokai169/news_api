@@ -8,435 +8,453 @@ use App\Repository\OfficialRepository;
 use App\Repository\WechatPublicAccountRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
+use Monolog\Logger;
 
 class WechatArticleSyncService
 {
+    private LoggerInterface $logger;
+
     public function __construct(
-        private readonly EntityManagerInterface $entityManager,
-        private readonly OfficialRepository $officialRepository,
-        private readonly WechatPublicAccountRepository $wechatAccountRepository,
-        private readonly WechatApiService $wechatApiService,
-        private readonly ImageUploadService $imageUploadService,
-        private readonly DistributedLockService $distributedLockService,
-        private readonly LoggerInterface $logger
+        private WechatApiService $wechatApiService,
+        private OfficialRepository $officialRepository,
+        private WechatPublicAccountRepository $wechatPublicAccountRepository,
+        private EntityManagerInterface $entityManager,
+        private MediaResourceProcessor $mediaResourceProcessor,
+        private ResourceExtractor $resourceExtractor,
+        LoggerInterface $logger
     ) {
+        // 使用专用的微信日志通道
+        if ($logger instanceof Logger) {
+            $this->logger = $logger->withName('wechat');
+        } else {
+            $this->logger = $logger;
+        }
     }
 
     /**
-     * 同步公众号文章
+     * 同步已发布文章
+     *
+     * @param string $publicAccountId 公众号ID
+     * @param array $options 选项参数
+     * @return array 同步结果
      */
-    public function syncArticles(string $accountId, bool $forceSync = false, bool $bypassLock = false): array
+    public function syncPublishedArticles(string $publicAccountId, array $options = []): array
     {
         $result = [
             'success' => false,
-            'message' => '',
-            'stats' => [
-                'total' => 0,
-                'created' => 0,
-                'updated' => 0,
-                'skipped' => 0,
-                'failed' => 0,
-            ],
+            'total_processed' => 0,
+            'new_articles' => 0,
+            'updated_articles' => 0,
             'errors' => [],
+            'message' => ''
         ];
 
-        // 获取公众号账户
-        $account = $this->wechatAccountRepository->find($accountId);
-        if (!$account) {
-            $result['message'] = '公众号账户不存在';
-            return $result;
-        }
-
-        if (!$account->isActive()) {
-            $result['message'] = '公众号账户未激活';
-            return $result;
-        }
-
-        // 使用分布式锁防止并发同步（除非使用绕过锁检查选项）
-        $lockKey = 'wechat_sync_' . $accountId;
-        if (!$bypassLock) {
-            if (!$this->distributedLockService->acquireLock($lockKey, 1800)) { // 30分钟锁
-                $result['message'] = '同步任务正在进行中，请稍后再试';
-                return $result;
-            }
-        } else {
-            // 如果绕过锁检查，直接尝试获取锁但不检查结果
-            $this->distributedLockService->acquireLock($lockKey, 1800);
-        }
-
         try {
-            // 获取access_token
-            $accessToken = $this->wechatApiService->getAccessToken($account);
-            if (!$accessToken) {
-                $result['message'] = '获取access_token失败';
+            $this->logger->info('开始同步微信文章', ['publicAccountId' => $publicAccountId]);
+
+            // 获取公众号信息
+            $publicAccount = $this->wechatPublicAccountRepository->find($publicAccountId);
+            if (!$publicAccount) {
+                $result['errors'][] = '公众号不存在: ' . $publicAccountId;
+                $result['message'] = '公众号不存在';
                 return $result;
             }
 
-            // 批量获取已发布消息列表 - 获取公众号已发布的文章
-            $publishedItems = $this->wechatApiService->getAllPublishedArticles($accessToken, 20, 0);
+            // 获取微信访问令牌
+            $accessToken = $this->wechatApiService->getAccessToken($publicAccount);
+            if (!$accessToken) {
+                $result['errors'][] = '获取微信访问令牌失败';
+                $result['message'] = '获取访问令牌失败';
+                return $result;
+            }
+
+            // 解析选项参数
+            $batchSize = $options['batch_size'] ?? 20;
+            $noContent = $options['no_content'] ?? 0;
+            $beginDate = $options['begin_date'] ?? 0;
+            $endDate = $options['end_date'] ?? 0;
+            $maxArticles = $options['max_articles'] ?? null;
+            $processMedia = $options['process_media'] ?? true; // 默认启用媒体处理
+
+            $this->logger->info('开始获取已发布文章', [
+                'batchSize' => $batchSize,
+                'noContent' => $noContent,
+                'beginDate' => $beginDate,
+                'endDate' => $endDate,
+                'maxArticles' => $maxArticles,
+                'processMedia' => $processMedia
+            ]);
+
+            // 获取所有已发布文章
+            $publishedItems = $this->wechatApiService->getAllPublishedArticles(
+                $accessToken,
+                $batchSize,
+                $noContent,
+                $beginDate,
+                $endDate
+            );
 
             if (empty($publishedItems)) {
-                $result['message'] = '没有获取到历史发布文章';
                 $result['success'] = true;
+                $result['message'] = '没有找到已发布文章';
+                $this->logger->info('没有找到已发布文章');
                 return $result;
             }
 
-            $result['stats']['total'] = count($publishedItems);
-            $this->logger->info(sprintf(
-                '获取到已发布消息：%d 篇',
-                count($publishedItems)
-            ));
-
             // 提取文章数据
-            $articles = $this->wechatApiService->extractAllPublishedArticles($publishedItems);
+            $articlesData = $this->wechatApiService->extractAllPublishedArticles($publishedItems);
 
-            // 处理每篇文章
-            foreach ($articles as $articleData) {
-                $processResult = $this->processArticle($account, $articleData, $forceSync);
+            // 限制最大文章数量
+            if ($maxArticles && count($articlesData) > $maxArticles) {
+                $articlesData = array_slice($articlesData, 0, $maxArticles);
+                $this->logger->info('限制最大文章数量', ['maxArticles' => $maxArticles]);
+            }
 
-                switch ($processResult['status']) {
-                    case 'created':
-                        $result['stats']['created']++;
-                        break;
-                    case 'updated':
-                        $result['stats']['updated']++;
-                        break;
-                    case 'skipped':
-                        $result['stats']['skipped']++;
-                        break;
-                    case 'failed':
-                        $result['stats']['failed']++;
-                        $result['errors'][] = $processResult['error'];
-                        break;
+            $this->logger->info('获取到文章数据', ['count' => count($articlesData)]);
+
+            // 处理文章数据
+            $articles = [];
+            $errors = [];
+
+            foreach ($articlesData as $articleData) {
+                try {
+                    $article = $this->processArticleData($articleData, $publicAccountId, $processMedia);
+                    if ($article) {
+                        $articles[] = $article;
+                    }
+                } catch (\Exception $e) {
+                    $errorMsg = '处理文章数据失败: ' . $e->getMessage();
+                    $errors[] = $errorMsg;
+                    $this->logger->error($errorMsg, [
+                        'articleData' => $articleData,
+                        'exception' => $e
+                    ]);
                 }
             }
 
-            $result['success'] = true;
-            $result['message'] = sprintf(
-                '同步完成：总计%d篇，新增%d篇，更新%d篇，跳过%d篇，失败%d篇',
-                $result['stats']['total'],
-                $result['stats']['created'],
-                $result['stats']['updated'],
-                $result['stats']['skipped'],
-                $result['stats']['failed']
-            );
-        } catch (\Exception $e) {
-            $result['message'] = '同步过程中发生异常: ' . $e->getMessage();
-            $result['errors'][] = $e->getMessage();
-            $this->logger->error('公众号文章同步异常: ' . $e->getMessage());
-        } finally {
-            // 释放锁
-            $this->distributedLockService->releaseLock($lockKey);
-        }
+            $result['total_processed'] = count($articlesData);
 
-        return $result;
-    }
-
-    /**
-     * 处理单篇文章
-     */
-    private function processArticle(WechatPublicAccount $account, array $articleData, bool $forceSync): array
-    {
-        $result = ['status' => 'skipped'];
-
-        try {
-            // 添加调试日志
-            $this->logger->info('开始处理文章: ' . ($articleData['title'] ?? '未知标题'));
-            $this->logger->info('文章数据: ' . json_encode($articleData));
-
-            // 检查文章是否已存在（基于原始URL或文章ID）
-            $originalUrl = $articleData['content_source_url'] ?? $articleData['url'] ?? '';
-            $articleId = $articleData['article_id'] ?? '';
-
-            $this->logger->info("检查文章存在性 - articleId: {$articleId}, originalUrl: {$originalUrl}");
-
-            // 优先使用article_id进行去重，如果没有则使用URL
-            $existingArticle = null;
-            if ($articleId) {
-                $existingArticle = $this->officialRepository->findOneBy(['articleId' => $articleId]);
-                $this->logger->info("通过articleId查找结果: " . ($existingArticle ? '存在' : '不存在'));
-            }
-            if (!$existingArticle && $originalUrl) {
-                $existingArticle = $this->officialRepository->findOneBy(['originalUrl' => $originalUrl]);
-                $this->logger->info("通过originalUrl查找结果: " . ($existingArticle ? '存在' : '不存在'));
+            if (empty($articles)) {
+                $result['success'] = true;
+                $result['message'] = '没有有效的文章数据';
+                $result['errors'] = array_merge($result['errors'], $errors);
+                return $result;
             }
 
-            // 如果强制同步或者文章不存在，则处理
-            if ($forceSync || !$existingArticle) {
-                $this->logger->info("准备处理文章 - forceSync: " . ($forceSync ? 'true' : 'false') . ", existingArticle: " . ($existingArticle ? '存在' : '不存在'));
+            // 保存文章
+            $saveResult = $this->saveArticles($articles);
 
-                // 提取图片URL
-                $content = $articleData['content'] ?? $articleData['digest'] ?? '';
-                if (empty($content)) {
-                    $content = $articleData['title'] ?? ''; // 如果内容为空，使用标题作为内容
-                }
+            $result['new_articles'] = $saveResult['new_count'];
+            $result['updated_articles'] = $saveResult['updated_count'];
+            $result['errors'] = array_merge($result['errors'], $errors, $saveResult['errors']);
 
-                $this->logger->info("处理内容长度: " . strlen($content));
-
-                $imageUrls = $this->imageUploadService->extractImageUrls($content);
-
-                // 上传图片并获取URL映射
-                $urlMapping = [];
-                if (!empty($imageUrls)) {
-                    $urlMapping = $this->imageUploadService->uploadImages($imageUrls);
-                }
-
-                // 替换内容中的图片URL
-                $processedContent = $this->imageUploadService->replaceImageUrls($content, $urlMapping);
-
-                // 处理封面图
-                $coverImageUrl = $articleData['thumb_url'] ?? '';
-                $processedCoverUrl = $coverImageUrl ? $this->imageUploadService->uploadImage($coverImageUrl) : '';
-
-                if ($existingArticle) {
-                    // 更新现有文章
-                    $this->logger->info("更新现有文章: " . $existingArticle->getTitle());
-                    $this->updateArticle($existingArticle, $articleData, $processedContent, $processedCoverUrl);
-                    $result['status'] = 'updated';
-                } else {
-                    // 创建新文章
-                    $this->logger->info("创建新文章: " . ($articleData['title'] ?? '未知'));
-                    $this->createArticle($account, $articleData, $processedContent, $processedCoverUrl);
-                    $result['status'] = 'created';
-                }
+            if (empty($result['errors'])) {
+                $result['success'] = true;
+                $result['message'] = sprintf(
+                    '同步完成，新增 %d 篇，更新 %d 篇',
+                    $result['new_articles'],
+                    $result['updated_articles']
+                );
             } else {
-                $result['status'] = 'skipped';
-                $this->logger->info("文章已存在，跳过: " . ($articleData['title'] ?? '未知'));
+                $result['message'] = '同步完成，但存在错误';
             }
 
+            $this->logger->info('微信文章同步完成', $result);
+
         } catch (\Exception $e) {
-            $result['status'] = 'failed';
-            $result['error'] = '处理文章失败: ' . $e->getMessage() . ' - 文章标题: ' . ($articleData['title'] ?? '未知');
-            $this->logger->error($result['error']);
-            $this->logger->error('异常堆栈: ' . $e->getTraceAsString());
+            $errorMsg = '同步微信文章失败: ' . $e->getMessage();
+            $result['errors'][] = $errorMsg;
+            $result['message'] = $errorMsg;
+
+            $this->logger->error($errorMsg, [
+                'publicAccountId' => $publicAccountId,
+                'exception' => $e
+            ]);
         }
 
         return $result;
     }
 
     /**
-     * 创建新文章
+     * 处理文章数据，转换为Official实体
+     *
+     * @param array $articleData 微信API返回的文章数据
+     * @param string $publicAccountId 公众号ID
+     * @param bool $processMedia 是否处理媒体资源
+     * @return Official|null
      */
-    private function createArticle(WechatPublicAccount $account, array $articleData, string $processedContent, ?string $coverUrl): void
+    private function processArticleData(array $articleData, string $publicAccountId, bool $processMedia = true): ?Official
     {
-        $article = new Official();
+        try {
+            // 验证必要字段
+            if (empty($articleData['article_id']) || empty($articleData['title'])) {
+                $this->logger->warning('文章数据缺少必要字段', ['articleData' => $articleData]);
+                return null;
+            }
 
-        $title = $articleData['title'] ?? '';
-        $content = $processedContent ?: ($articleData['digest'] ?? $title);
+            $articleId = $articleData['article_id'];
 
-        // 确保内容不为空
-        if (empty($content)) {
-            $content = $title . ' - [内容为空]';
+            // 检查文章是否已存在
+            $existingArticle = $this->officialRepository->findByArticleId($articleId);
+
+            if ($existingArticle) {
+                // 更新现有文章
+                $article = $existingArticle;
+                $this->logger->debug('更新现有文章', ['articleId' => $articleId]);
+            } else {
+                // 创建新文章
+                $article = new Official();
+                $article->setArticleId($articleId);
+                $article->setWechatAccountId($publicAccountId);
+                $this->logger->debug('创建新文章', ['articleId' => $articleId]);
+            }
+
+            // 设置基本信息
+            $article->setTitle($articleData['title'] ?? '');
+            $article->setAuthor($articleData['author'] ?? null);
+            $article->setDigest($articleData['digest'] ?? null);
+
+            // 处理内容和媒体资源
+            $content = $articleData['content'] ?? '';
+            $thumbUrl = $articleData['thumb_url'] ?? null;
+
+            if ($processMedia) {
+                // 处理媒体资源
+                $mediaResult = $this->mediaResourceProcessor->processArticleMedia($content, $thumbUrl);
+
+                // 更新内容和缩略图URL
+                $content = $mediaResult['content'];
+                $thumbUrl = $mediaResult['thumb_url'];
+
+                // 记录媒体处理结果
+                if (!empty($mediaResult['errors'])) {
+                    $this->logger->warning('媒体资源处理存在错误', [
+                        'articleId' => $articleId,
+                        'errors' => $mediaResult['errors']
+                    ]);
+                }
+
+                if (!empty($mediaResult['processed_resources'])) {
+                    $this->logger->info('媒体资源处理成功', [
+                        'articleId' => $articleId,
+                        'processed_count' => count($mediaResult['processed_resources'])
+                    ]);
+                }
+            }
+
+            if (empty($content)) {
+                $content = '<p>暂无内容</p>';
+            }
+            $article->setContent($content);
+
+            // 设置URL信息
+            $article->setOriginalUrl($articleData['url'] ?? '');
+
+            // 设置缩略图信息
+            $article->setThumbMediaId($articleData['thumb_media_id'] ?? null);
+            $article->setThumbUrl($thumbUrl);
+
+            // 设置显示选项
+            $article->setShowCoverPic($articleData['show_cover_pic'] ?? 0);
+            $article->setNeedOpenComment($articleData['need_open_comment'] ?? 0);
+
+            // DEBUG: 添加调试日志验证问题
+            $this->logger->debug('处理文章数据', [
+                'articleId' => $articleId,
+                'title' => $articleData['title'] ?? '',
+                'hasUpdateTime' => isset($articleData['update_time']),
+                'update_time_value' => $articleData['update_time'] ?? 'not_set'
+            ]);
+
+            // 设置发布时间
+            if (isset($articleData['update_time'])) {
+                $updateTime = \DateTime::createFromFormat('U', $articleData['update_time']);
+                if ($updateTime) {
+                    $article->setUpdatedAt($updateTime);
+                    $this->logger->debug('设置更新时间成功', ['updateTime' => $updateTime->format('Y-m-d H:i:s')]);
+                } else {
+                    $this->logger->warning('创建DateTime失败', ['update_time' => $articleData['update_time']]);
+                }
+            }
+
+            return $article;
+        } catch (\Exception $e) {
+            $this->logger->error('处理文章数据时发生异常', [
+                'articleData' => $articleData,
+                'exception' => $e
+            ]);
+            return null;
         }
-
-        $article->setTitle($title);
-        $article->setContent($content);
-        $article->setTitleImg($coverUrl ?? '');
-        $article->setOriginalUrl($articleData['content_source_url'] ?? $articleData['url'] ?? '');
-
-        // 设置文章ID（如果有）
-        if (isset($articleData['article_id'])) {
-            $article->setArticleId($articleData['article_id']);
-        }
-
-        // 设置发布时间（优先使用publish_time，其次使用update_time）
-        $timestamp = $articleData['publish_time'] ?? $articleData['update_time'] ?? time();
-        $releaseTime = (new \DateTime())->setTimestamp($timestamp);
-        $article->setReleaseTime($releaseTime->format('Y-m-d H:i:s'));
-
-        // 设置状态为激活
-        $article->setStatus(1);
-
-        // 设置分类为固定分类ID 18 (GZH_001)
-        $category = $this->entityManager->getRepository(\App\Entity\SysNewsArticleCategory::class)->find(18);
-        if ($category) {
-            $article->setCategory($category);
-        }
-
-        $this->entityManager->persist($article);
-        $this->entityManager->flush();
-
-        $this->logger->info('创建文章成功: ' . $article->getTitle() . ' (ID: ' . $article->getId() . ')');
     }
 
     /**
-     * 更新现有文章
+     * 保存文章列表
+     *
+     * @param array $articles
+     * @return array
      */
-    private function updateArticle(Official $article, array $articleData, string $processedContent, ?string $coverUrl): void
+    private function saveArticles(array $articles): array
     {
-        $article->setTitle($articleData['title'] ?? $article->getTitle());
-        $article->setContent($processedContent);
+        $result = [
+            'new_count' => 0,
+            'updated_count' => 0,
+            'errors' => []
+        ];
 
-        if ($coverUrl) {
-            $article->setTitleImg($coverUrl);
+        foreach ($articles as $article) {
+            try {
+                $isNew = $article->getId() === null;
+
+                $this->entityManager->persist($article);
+                $this->entityManager->flush();
+
+                if ($isNew) {
+                    $result['new_count']++;
+                } else {
+                    $result['updated_count']++;
+                }
+            } catch (\Exception $e) {
+                $errorMsg = '保存文章失败: ' . $e->getMessage();
+                $result['errors'][] = $errorMsg;
+                $this->logger->error($errorMsg, [
+                    'articleId' => $article->getArticleId(),
+                    'exception' => $e
+                ]);
+            }
         }
 
-        // 更新文章ID（如果有）
-        if (isset($articleData['article_id'])) {
-            $article->setArticleId($articleData['article_id']);
-        }
+        return $result;
+    }
 
-        // 更新发布时间（优先使用publish_time，其次使用update_time）
-        $timestamp = $articleData['publish_time'] ?? $articleData['update_time'] ?? time();
-        $releaseTime = (new \DateTime())->setTimestamp($timestamp);
-        $article->setReleaseTime($releaseTime->format('Y-m-d H:i:s'));
+    /**
+     * 同步文章 - syncPublishedArticles的包装器方法
+     *
+     * @param string $accountId 账户ID
+     * @param bool $forceSync 是否强制同步
+     * @param bool $bypassLock 是否绕过锁定
+     * @return array 格式化的同步结果
+     */
+    public function syncArticles(string $accountId, bool $forceSync = false, bool $bypassLock = false): array
+    {
+        // 转换参数格式
+        $options = [
+            'force_sync' => $forceSync,
+            'bypass_lock' => $bypassLock
+        ];
 
-        // 更新分类为固定分类ID 18 (GZH_001)
-        $category = $this->entityManager->getRepository(\App\Entity\SysNewsArticleCategory::class)->find(18);
-        if ($category) {
-            $article->setCategory($category);
-        }
+        // 调用现有方法
+        $result = $this->syncPublishedArticles($accountId, $options);
 
-        $this->entityManager->flush();
-
-        $this->logger->info('更新文章成功: ' . $article->getTitle());
+        // 调整返回格式以匹配预期
+        return [
+            'success' => $result['success'],
+            'message' => $result['message'],
+            'stats' => [
+                'total' => $result['total_processed'],
+                'created' => $result['new_articles'],
+                'updated' => $result['updated_articles'],
+                'skipped' => 0, // 需要从其他地方计算或设置为0
+                'failed' => count($result['errors'])
+            ],
+            'errors' => $result['errors']
+        ];
     }
 
     /**
      * 获取同步状态
+     *
+     * @param string $accountId 公众号ID
+     * @return array 同步状态信息
      */
     public function getSyncStatus(string $accountId): array
     {
-        $account = $this->wechatAccountRepository->find($accountId);
-        if (!$account) {
-            return ['error' => '公众号账户不存在'];
-        }
-
-        $lockKey = 'wechat_sync_' . $accountId;
-        $isSyncing = $this->distributedLockService->isLocked($lockKey);
-
-        return [
-            'account_id' => $accountId,
-            'account_name' => $account->getName(),
-            'is_syncing' => $isSyncing,
-            'last_sync_time' => null, // 可以扩展记录最后同步时间
-        ];
-    }
-
-    /**
-     * 同步已发布消息（根据微信官方文档）
-     */
-    public function syncPublishedArticles(string $accountId, bool $forceSync = false, bool $bypassLock = false, int $beginDate = 0, int $endDate = 0): array
-    {
-        $result = [
-            'success' => false,
-            'message' => '',
-            'stats' => [
-                'total' => 0,
-                'created' => 0,
-                'updated' => 0,
-                'skipped' => 0,
-                'failed' => 0,
-            ],
-            'errors' => [],
-        ];
-
-        // 获取公众号账户
-        $account = $this->wechatAccountRepository->find($accountId);
-        if (!$account) {
-            $result['message'] = '公众号账户不存在';
-            return $result;
-        }
-
-        if (!$account->isActive()) {
-            $result['message'] = '公众号账户未激活';
-            return $result;
-        }
-
-        // 使用分布式锁防止并发同步（除非使用绕过锁检查选项）
-        $lockKey = 'wechat_published_sync_' . $accountId;
-        if (!$bypassLock) {
-            if (!$this->distributedLockService->acquireLock($lockKey, 1800)) { // 30分钟锁
-                $result['message'] = '已发布消息同步任务正在进行中，请稍后再试';
-                return $result;
-            }
-        } else {
-            // 如果绕过锁检查，直接尝试获取锁但不检查结果
-            $this->distributedLockService->acquireLock($lockKey, 1800);
-        }
-
         try {
-            // 获取access_token
-            $accessToken = $this->wechatApiService->getAccessToken($account);
-            if (!$accessToken) {
-                $result['message'] = '获取access_token失败';
-                return $result;
+            $this->logger->info('获取同步状态', ['accountId' => $accountId]);
+
+            // 验证公众号是否存在
+            $publicAccount = $this->wechatPublicAccountRepository->find($accountId);
+            if (!$publicAccount) {
+                return [
+                    'error' => '公众号不存在: ' . $accountId,
+                    'accountId' => $accountId,
+                    'exists' => false
+                ];
             }
 
-            // 批量获取已发布消息列表
-            $publishedItems = $this->wechatApiService->getAllPublishedArticles($accessToken, 20, 0, $beginDate, $endDate);
+            // 获取该账号的文章统计信息
+            $totalArticles = $this->officialRepository->countByAccountId($accountId);
+            $activeArticles = $this->officialRepository->countActiveByAccountId($accountId);
+            $lastSyncTime = $this->officialRepository->getLastSyncTime($accountId);
 
-            if (empty($publishedItems)) {
-                $result['message'] = '没有获取到已发布消息';
-                $result['success'] = true;
-                return $result;
-            }
+            // 获取最近的同步记录
+            $recentArticles = $this->officialRepository->findRecentByAccountId($accountId, 5);
 
-            $result['stats']['total'] = count($publishedItems);
-            $this->logger->info(sprintf(
-                '获取到已发布消息：%d 篇',
-                count($publishedItems)
-            ));
+            $status = [
+                'accountId' => $accountId,
+                'accountName' => $publicAccount->getName() ?? '未知公众号',
+                'exists' => true,
+                'lastSyncTime' => $lastSyncTime ? $lastSyncTime->format('Y-m-d H:i:s') : null,
+                'statistics' => [
+                    'totalArticles' => $totalArticles,
+                    'activeArticles' => $activeArticles,
+                    'inactiveArticles' => $totalArticles - $activeArticles
+                ],
+                'recentArticles' => array_map(function ($article) {
+                    return [
+                        'id' => $article->getId(),
+                        'articleId' => $article->getArticleId(),
+                        'title' => $article->getTitle(),
+                        'updateTime' => $article->getUpdatedAt()->format('Y-m-d H:i:s'),
+                        'status' => $article->getStatus()
+                    ];
+                }, $recentArticles),
+                'syncStatus' => $this->determineSyncStatus($lastSyncTime, $totalArticles)
+            ];
 
-            // 提取文章数据
-            $articles = $this->wechatApiService->extractAllPublishedArticles($publishedItems);
+            $this->logger->info('同步状态获取成功', $status);
 
-            // 处理每篇文章
-            foreach ($articles as $articleData) {
-                $processResult = $this->processArticle($account, $articleData, $forceSync);
-
-                switch ($processResult['status']) {
-                    case 'created':
-                        $result['stats']['created']++;
-                        break;
-                    case 'updated':
-                        $result['stats']['updated']++;
-                        break;
-                    case 'skipped':
-                        $result['stats']['skipped']++;
-                        break;
-                    case 'failed':
-                        $result['stats']['failed']++;
-                        $result['errors'][] = $processResult['error'];
-                        break;
-                }
-            }
-
-            $result['success'] = true;
-            $result['message'] = sprintf(
-                '已发布消息同步完成：总计%d篇，新增%d篇，更新%d篇，跳过%d篇，失败%d篇',
-                $result['stats']['total'],
-                $result['stats']['created'],
-                $result['stats']['updated'],
-                $result['stats']['skipped'],
-                $result['stats']['failed']
-            );
+            return $status;
 
         } catch (\Exception $e) {
-            $result['message'] = '已发布消息同步过程中发生异常: ' . $e->getMessage();
-            $result['errors'][] = $e->getMessage();
-            $this->logger->error('已发布消息同步异常: ' . $e->getMessage());
-        } finally {
-            // 释放锁
-            $this->distributedLockService->releaseLock($lockKey);
-        }
+            $this->logger->error('获取同步状态失败', [
+                'accountId' => $accountId,
+                'error' => $e->getMessage(),
+                'exception' => $e
+            ]);
 
-        return $result;
+            return [
+                'error' => '获取同步状态失败: ' . $e->getMessage(),
+                'accountId' => $accountId,
+                'exists' => false
+            ];
+        }
     }
 
     /**
-     * 获取同步统计
+     * 确定同步状态
+     *
+     * @param \DateTime|null $lastSyncTime 最后同步时间
+     * @param int $totalArticles 文章总数
+     * @return string
      */
-    public function getSyncStats(string $accountId): array
+    private function determineSyncStatus(?\DateTime $lastSyncTime, int $totalArticles): string
     {
-        // 这里可以统计该公众号下的文章数量等
-        // 由于Official实体没有直接关联公众号ID，暂时返回0
-        $articleCount = 0;
+        if (!$lastSyncTime) {
+            return 'never_synced';
+        }
 
-        return [
-            'account_id' => $accountId,
-            'total_articles' => $articleCount,
-            'last_sync_info' => null, // 可以扩展记录同步历史
-        ];
+        $now = new \DateTime();
+        $interval = $now->diff($lastSyncTime);
+        $hoursAgo = $interval->h + ($interval->days * 24);
+
+        if ($hoursAgo < 1) {
+            return 'recently_synced';
+        } elseif ($hoursAgo < 24) {
+            return 'synced_today';
+        } elseif ($hoursAgo < 168) { // 7 days
+            return 'synced_this_week';
+        } else {
+            return 'needs_sync';
+        }
     }
 }

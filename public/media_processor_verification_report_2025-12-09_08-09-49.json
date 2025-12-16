@@ -1,0 +1,175 @@
+{
+    "timestamp": "2025-12-09 08:09:48",
+    "php_version": "8.3.12",
+    "memory_limit": "128M",
+    "container_tests": {
+        "container_creation": {
+            "success": false,
+            "details": [
+                "容器创建失败: The file \"\\\\WSL.LOCALHOST\\UBUNTU\\www\\wwwroot\\official_website_backend\\public\/..\/config\\services.yaml\" does not contain valid YAML: File \"\\\\WSL.LOCALHOST\\UBUNTU\\www\\wwwroot\\official_website_backend\\public\/..\/config\\services.yaml\" cannot be read."
+            ]
+        },
+        "service_availability": {
+            "success": false,
+            "services": {
+                "error": "容器未初始化"
+            }
+        },
+        "dependency_injection": {
+            "success": true,
+            "details": [
+                "MediaResourceProcessor实例创建成功",
+                "依赖注入正常工作"
+            ]
+        }
+    },
+    "functional_tests": {
+        "url_extraction": {
+            "success": true,
+            "details": [
+                "提取到 5 个URL",
+                "其中 4 个微信URL"
+            ],
+            "extracted_urls": [
+                "https:\/\/mmbiz.qpic.cn\/test1.jpg",
+                "https:\/\/example.com\/external.jpg",
+                "https:\/\/res.wx.qq.com\/test2.png",
+                "https:\/\/wx.qlogo.cn\/test3.mp4",
+                "https:\/\/mmfb.qpic.cn\/test4.jpg"
+            ],
+            "wechat_urls": [
+                "https:\/\/mmbiz.qpic.cn\/test1.jpg",
+                "https:\/\/res.wx.qq.com\/test2.png",
+                "https:\/\/wx.qlogo.cn\/test3.mp4",
+                "https:\/\/mmfb.qpic.cn\/test4.jpg"
+            ]
+        },
+        "wechat_resource_detection": {
+            "success": true,
+            "details": [
+                "正确识别 7\/7 个URL"
+            ],
+            "results": {
+                "https:\/\/mmbiz.qpic.cn\/image.jpg": {
+                    "expected": true,
+                    "actual": true,
+                    "correct": true
+                },
+                "https:\/\/res.wx.qq.com\/file.png": {
+                    "expected": true,
+                    "actual": true,
+                    "correct": true
+                },
+                "https:\/\/wx.qlogo.cn\/avatar.jpg": {
+                    "expected": true,
+                    "actual": true,
+                    "correct": true
+                },
+                "https:\/\/mmfb.qpic.cn\/video.mp4": {
+                    "expected": true,
+                    "actual": true,
+                    "correct": true
+                },
+                "https:\/\/example.com\/image.jpg": {
+                    "expected": false,
+                    "actual": false,
+                    "correct": true
+                },
+                "https:\/\/google.com\/photo.jpg": {
+                    "expected": false,
+                    "actual": false,
+                    "correct": true
+                },
+                "invalid-url": {
+                    "expected": false,
+                    "actual": false,
+                    "correct": true
+                }
+            }
+        },
+        "filename_generation": {
+            "success": true,
+            "details": [
+                "正确生成 2\/2 个文件名"
+            ],
+            "results": [
+                {
+                    "input": {
+                        "url": "https:\/\/mmbiz.qpic.cn\/test_image.jpg",
+                        "type": "thumb"
+                    },
+                    "output": "thumb_test_image_1765267788",
+                    "pattern": "\/^thumb_test_image_\\d+$\/",
+                    "matches": 1
+                },
+                {
+                    "input": {
+                        "url": "https:\/\/res.wx.qq.com\/video.mp4",
+                        "type": "content"
+                    },
+                    "output": "content_video_1765267788",
+                    "pattern": "\/^content_video_\\d+$\/",
+                    "matches": 1
+                }
+            ]
+        },
+        "mime_type_detection": {
+            "success": true,
+            "details": [
+                "检测到MIME类型: image\/jpeg",
+                "是否支持: 是"
+            ],
+            "detected_mime_type": "image\/jpeg",
+            "is_supported": true
+        }
+    },
+    "error_handling_tests": {
+        "invalid_url_handling": {
+            "success": false,
+            "details": [
+                "未正确处理无效URL错误"
+            ],
+            "has_error": false,
+            "errors": []
+        },
+        "network_error_handling": {
+            "success": true,
+            "details": [
+                "正确处理了网络错误"
+            ],
+            "has_error": true,
+            "error_message": "资源下载失败"
+        },
+        "file_save_error_handling": {
+            "success": true,
+            "details": [
+                "正确处理了文件保存错误"
+            ],
+            "has_error": true,
+            "error_message": "资源下载失败"
+        }
+    },
+    "integration_tests": {
+        "complete_article_processing": {
+            "success": true,
+            "details": [
+                "处理结果结构完整",
+                "处理了 0 个资源",
+                "遇到 3 个错误"
+            ],
+            "processed_resources_count": 0,
+            "errors_count": 3,
+            "content_modified": false,
+            "thumb_modified": false
+        },
+        "batch_processing": {
+            "success": true,
+            "details": [
+                "批量处理了 3 个资源",
+                "期望处理 3 个资源"
+            ],
+            "processed_count": 3,
+            "expected_count": 3
+        }
+    }
+}

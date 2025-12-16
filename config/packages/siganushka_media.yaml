@@ -1,0 +1,9 @@
+siganushka_media:
+    storage: Siganushka\MediaBundle\Storage\HuaweiObsStorage
+    media_class: App\Entity\Media
+    rules:
+        official:
+            constraint: image
+            constraint_options: { maxSize: '8M', mimeTypes: ['image/png', 'image/jpeg', 'image/bmp', 'image/tiff'] }
+            resize: false
+            optimize: false

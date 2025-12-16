@@ -1,0 +1,17 @@
+# 图片代理路由配置
+# 用于解决跨域访问图片资源的问题
+
+image_proxy:
+    path: /api/image-proxy
+    controller: App\Controller\ImageProxyController::proxy
+    methods: [GET]
+
+image_proxy_stats:
+    path: /api/image-proxy/stats
+    controller: App\Controller\ImageProxyController::stats
+    methods: [GET]
+
+image_proxy_clear_cache:
+    path: /api/image-proxy/clear-cache
+    controller: App\Controller\ImageProxyController::clearCache
+    methods: [POST]
