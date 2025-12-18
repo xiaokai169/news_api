@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CORS修复测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+
+        .error {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+
+        .loading {
+            background-color: #fff3cd;
+            border-color: #ffeaa7;
+            color: #856404;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        pre {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+
+        .response-data {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>CORS修复验证测试</h1>
+        <p>此页面用于验证CORS问题是否已修复。测试API地址：<code>https://127.0.0.1:8000/official-api/news</code></p>
+
+        <div class="test-section">
+            <h3>测试1: GET请求</h3>
+            <button onclick="testGetRequest()">发送GET请求</button>
+            <div id="get-result" class="loading">等待测试...</div>
+        </div>
+
+        <div class="test-section">
+            <h3>测试2: OPTIONS预检请求</h3>
+            <button onclick="testOptionsRequest()">发送OPTIONS请求</button>
+            <div id="options-result" class="loading">等待测试...</div>
+        </div>
+
+        <div class="test-section">
+            <h3>测试3: POST请求</h3>
+            <button onclick="testPostRequest()">发送POST请求</button>
+            <div id="post-result" class="loading">等待测试...</div>
+        </div>
+
+        <div class="test-section">
+            <h3>CORS头信息</h3>
+            <button onclick="showCorsHeaders()">显示CORS头</button>
+            <div id="cors-headers" class="loading">点击按钮查看CORS头信息...</div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://127.0.0.1:8000/official-api';
+
+        async function testGetRequest() {
+            const resultDiv = document.getElementById('get-result');
+            resultDiv.className = 'loading';
+            resultDiv.innerHTML = '正在发送GET请求...';
+
+            try {
+                const response = await fetch(`${API_BASE}/news`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-request-id': 'test-get-' + Date.now()
+                    }
+                });
+
+                const data = await response.json();
+
+                resultDiv.className = 'success';
+                resultDiv.innerHTML = `
+                    <strong>✅ GET请求成功</strong><br>
+                    状态码: ${response.status}<br>
+                    CORS头: ${response.headers.get('Access-Control-Allow-Origin') || '未设置'}<br>
+                    <details>
+                        <summary>响应数据</summary>
+                        <pre class="response-data">${JSON.stringify(data, null, 2)}</pre>
+                    </details>
+                `;
+            } catch (error) {
+                resultDiv.className = 'error';
+                resultDiv.innerHTML = `
+                    <strong>❌ GET请求失败</strong><br>
+                    错误: ${error.message}<br>
+                    <pre>${error.stack}</pre>
+                `;
+            }
+        }
+
+        async function testOptionsRequest() {
+            const resultDiv = document.getElementById('options-result');
+            resultDiv.className = 'loading';
+            resultDiv.innerHTML = '正在发送OPTIONS预检请求...';
+
+            try {
+                const response = await fetch(`${API_BASE}/news`, {
+                    method: 'OPTIONS',
+                    headers: {
+                        'Origin': window.location.origin,
+                        'Access-Control-Request-Method': 'GET',
+                        'Access-Control-Request-Headers': 'Content-Type, x-request-id'
+                    }
+                });
+
+                resultDiv.className = 'success';
+                resultDiv.innerHTML = `
+                    <strong>✅ OPTIONS请求成功</strong><br>
+                    状态码: ${response.status}<br>
+                    Allow-Origin: ${response.headers.get('Access-Control-Allow-Origin') || '未设置'}<br>
+                    Allow-Methods: ${response.headers.get('Access-Control-Allow-Methods') || '未设置'}<br>
+                    Allow-Headers: ${response.headers.get('Access-Control-Allow-Headers') || '未设置'}
+                `;
+            } catch (error) {
+                resultDiv.className = 'error';
+                resultDiv.innerHTML = `
+                    <strong>❌ OPTIONS请求失败</strong><br>
+                    错误: ${error.message}<br>
+                    <pre>${error.stack}</pre>
+                `;
+            }
+        }
+
+        async function testPostRequest() {
+            const resultDiv = document.getElementById('post-result');
+            resultDiv.className = 'loading';
+            resultDiv.innerHTML = '正在发送POST请求...';
+
+            try {
+                const response = await fetch(`${API_BASE}/news`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-request-id': 'test-post-' + Date.now()
+                    },
+                    body: JSON.stringify({
+                        name: 'CORS测试文章',
+                        content: '这是用于测试CORS的文章内容'
+                    })
+                });
+
+                const data = await response.json();
+
+                resultDiv.className = response.ok ? 'success' : 'error';
+                resultDiv.innerHTML = `
+                    <strong>${response.ok ? '✅' : '❌'} POST请求${response.ok ? '成功' : '失败'}</strong><br>
+                    状态码: ${response.status}<br>
+                    CORS头: ${response.headers.get('Access-Control-Allow-Origin') || '未设置'}<br>
+                    <details>
+                        <summary>响应数据</summary>
+                        <pre class="response-data">${JSON.stringify(data, null, 2)}</pre>
+                    </details>
+                `;
+            } catch (error) {
+                resultDiv.className = 'error';
+                resultDiv.innerHTML = `
+                    <strong>❌ POST请求失败</strong><br>
+                    错误: ${error.message}<br>
+                    <pre>${error.stack}</pre>
+                `;
+            }
+        }
+
+        async function showCorsHeaders() {
+            const headersDiv = document.getElementById('cors-headers');
+            headersDiv.className = 'loading';
+            headersDiv.innerHTML = '正在获取CORS头信息...';
+
+            try {
+                const response = await fetch(`${API_BASE}/news`, {
+                    method: 'GET',
+                    headers: {
+                        'x-request-id': 'cors-headers-' + Date.now()
+                    }
+                });
+
+                const corsHeaders = {
+                    'Access-Control-Allow-Origin': response.headers.get('Access-Control-Allow-Origin'),
+                    'Access-Control-Allow-Methods': response.headers.get('Access-Control-Allow-Methods'),
+                    'Access-Control-Allow-Headers': response.headers.get('Access-Control-Allow-Headers'),
+                    'Access-Control-Max-Age': response.headers.get('Access-Control-Max-Age'),
+                    'Access-Control-Allow-Credentials': response.headers.get('Access-Control-Allow-Credentials'),
+                    'X-CORS-Handler': response.headers.get('X-CORS-Handler'),
+                    'X-CORS-Request-Origin': response.headers.get('X-CORS-Request-Origin'),
+                    'X-CORS-Allowed-Origin': response.headers.get('X-CORS-Allowed-Origin')
+                };
+
+                headersDiv.className = 'success';
+                headersDiv.innerHTML = `
+                    <strong>✅ CORS头信息获取成功</strong><br>
+                    <pre>${JSON.stringify(corsHeaders, null, 2)}</pre>
+                `;
+            } catch (error) {
+                headersDiv.className = 'error';
+                headersDiv.innerHTML = `
+                    <strong>❌ 获取CORS头失败</strong><br>
+                    错误: ${error.message}
+                `;
+            }
+        }
+
+        // 页面加载时自动运行测试
+        window.addEventListener('load', () => {
+            console.log('CORS测试页面已加载，可以开始测试');
+        });
+    </script>
+</body>
+
+</html>

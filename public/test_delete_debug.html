@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DELETE接口调试测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        button {
+            padding: 10px 15px;
+            margin: 5px;
+            cursor: pointer;
+        }
+
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 3px;
+            white-space: pre-wrap;
+        }
+
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>DELETE接口调试测试</h1>
+
+    <div class="test-section">
+        <h3>测试文章ID: 42</h3>
+        <button onclick="testGet()">1. 获取文章状态</button>
+        <button onclick="testDelete()">2. 执行DELETE操作</button>
+        <button onclick="testGetAfterDelete()">3. 删除后再次获取</button>
+        <button onclick="testListArticles()">4. 检查文章列表</button>
+        <button onclick="clearResults()">清空结果</button>
+    </div>
+
+    <div id="results"></div>
+
+    <script>
+        const baseUrl = 'https://127.0.0.1:8000';
+
+        function addResult(message, type = 'info') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            div.textContent = new Date().toLocaleTimeString() + ' - ' + message;
+            results.appendChild(div);
+        }
+
+        async function makeRequest(url, options = {}) {
+            const defaultOptions = {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            };
+
+            const finalOptions = { ...defaultOptions, ...options };
+
+            try {
+                const response = await fetch(url, finalOptions);
+                const data = await response.json();
+                return { success: response.ok, status: response.status, data };
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        }
+
+        async function testGet() {
+            addResult('正在获取文章ID 42的状态...', 'info');
+
+            const result = await makeRequest(`${baseUrl}/official-api/wechat/articles/42`);
+
+            if (result.success) {
+                addResult(`获取成功: ${JSON.stringify(result.data, null, 2)}`, 'success');
+
+                // 检查is_deleted字段
+                if (result.data.data) {
+                    const isDeleted = result.data.data.is_deleted;
+                    addResult(`文章is_deleted状态: ${isDeleted}`, isDeleted ? 'error' : 'success');
+                }
+            } else {
+                addResult(`获取失败: ${result.error || JSON.stringify(result.data)}`, 'error');
+            }
+        }
+
+        async function testDelete() {
+            addResult('正在执行DELETE操作...', 'info');
+
+            const result = await makeRequest(`${baseUrl}/official-api/wechat/articles/42`, {
+                method: 'DELETE'
+            });
+
+            if (result.success) {
+                addResult(`DELETE成功: ${JSON.stringify(result.data, null, 2)}`, 'success');
+            } else {
+                addResult(`DELETE失败: ${result.error || JSON.stringify(result.data)}`, 'error');
+            }
+        }
+
+        async function testGetAfterDelete() {
+            addResult('删除后重新获取文章状态...', 'info');
+
+            const result = await makeRequest(`${baseUrl}/official-api/wechat/articles/42`);
+
+            if (result.success) {
+                addResult(`删除后获取成功: ${JSON.stringify(result.data, null, 2)}`, 'success');
+
+                // 检查is_deleted字段
+                if (result.data.data) {
+                    const isDeleted = result.data.data.is_deleted;
+                    addResult(`删除后文章is_deleted状态: ${isDeleted}`, isDeleted ? 'success' : 'error');
+                }
+            } else {
+                addResult(`删除后获取失败: ${result.error || JSON.stringify(result.data)}`, 'error');
+            }
+        }
+
+        async function testListArticles() {
+            addResult('检查文章列表（验证是否过滤已删除文章）...', 'info');
+
+            const result = await makeRequest(`${baseUrl}/official-api/wechat/articles?limit=50`);
+
+            if (result.success) {
+                addResult(`文章列表获取成功`, 'success');
+
+                // 查找ID为42的文章
+                let found = false;
+                if (result.data.data && result.data.data.items) {
+                    result.data.data.items.forEach(article => {
+                        if (article.id === 42) {
+                            found = true;
+                            addResult(`文章ID 42在列表中仍然存在! is_deleted: ${article.is_deleted}`, 'error');
+                        }
+                    });
+                }
+
+                if (!found) {
+                    addResult(`文章ID 42已从列表中过滤`, 'success');
+                }
+
+                addResult(`总文章数: ${result.data.data?.total || 0}`, 'info');
+            } else {
+                addResult(`文章列表获取失败: ${result.error || JSON.stringify(result.data)}`, 'error');
+            }
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        // 页面加载时自动测试获取文章状态
+        window.onload = function () {
+            addResult('DELETE接口调试页面已加载', 'info');
+            addResult('点击按钮开始测试', 'info');
+        };
+    </script>
+</body>
+
+</html>

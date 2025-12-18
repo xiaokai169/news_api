@@ -3,45 +3,56 @@ nelmio_cors:
         origin_regex: false  # 改为false避免正则匹配问题
         allow_origin: ['%env(CORS_ALLOW_ORIGIN)%']  # 使用环境变量
         allow_methods: ['GET', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE']
-        allow_headers: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'x-request-id', 'X-Request-Id', 'X-Request-ID']
+        allow_headers: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'x-request-id', 'X-Request-Id', 'X-Request-ID', 'X-Custom-Header']
         expose_headers: ['Link', 'X-Pagination']
         max_age: 3600
         hosts: []
         allow_credentials: false
-        forced_allow_origin_value: null
+        forced_allow_origin_value: '*'  # 强制设置为通配符作为后备
         skip_same_as_origin: true
     paths:
         '^/api/':
             origin_regex: false
             allow_origin: ['%env(CORS_ALLOW_ORIGIN)%']
             allow_methods: ['GET', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE']
-            allow_headers: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'x-request-id', 'X-Request-Id', 'X-Request-ID']
+            allow_headers: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'x-request-id', 'X-Request-Id', 'X-Request-ID', 'X-Custom-Header']
             expose_headers: ['Link', 'X-Pagination']
             max_age: 3600
             hosts: []
             allow_credentials: false
-            forced_allow_origin_value: null
+            forced_allow_origin_value: '*'  # 强制设置为通配符作为后备
             skip_same_as_origin: true
+        '^/api_doc':
+            origin_regex: false
+            allow_origin: ['*']  # 允许所有来源访问API文档
+            allow_methods: ['GET', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE']
+            allow_headers: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'x-request-id', 'X-Request-Id', 'X-Request-ID', 'X-Custom-Header']
+            expose_headers: ['Link', 'X-Pagination']
+            max_age: 3600
+            hosts: []
+            allow_credentials: false
+            forced_allow_origin_value: '*'
+            skip_same_as_origin: false
         '^/official-api/':
             origin_regex: false
             allow_origin: ['%env(CORS_ALLOW_ORIGIN)%']
             allow_methods: ['GET', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE']
-            allow_headers: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'x-request-id', 'X-Request-Id', 'X-Request-ID']
+            allow_headers: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'x-request-id', 'X-Request-Id', 'X-Request-ID', 'X-Custom-Header']
             expose_headers: ['Link', 'X-Pagination']
             max_age: 3600
             hosts: []
             allow_credentials: false
-            forced_allow_origin_value: null
+            forced_allow_origin_value: '*'  # 强制设置为通配符作为后备
             skip_same_as_origin: true
         '^/public-api/':
             origin_regex: false
             allow_origin: ['%env(CORS_ALLOW_ORIGIN)%']
             allow_methods: ['GET', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE']
-            allow_headers: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'x-request-id', 'X-Request-Id', 'X-Request-ID']
+            allow_headers: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'x-request-id', 'X-Request-Id', 'X-Request-ID', 'X-Custom-Header']
             expose_headers: ['Link', 'X-Pagination']
             max_age: 3600
             hosts: []
             allow_credentials: false
-            forced_allow_origin_value: null
+            forced_allow_origin_value: '*'  # 强制设置为通配符作为后备
             skip_same_as_origin: true
 

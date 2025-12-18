@@ -19,7 +19,9 @@ class OfficialRepository extends ServiceEntityRepository
     public function findByPage(array $criteria = [], ?int $limit = null, ?int $offset = null): array
     {
         $qb = $this->createQueryBuilder('o')
-            ->orderBy('o.createAt', 'DESC');
+            ->orderBy('o.createAt', 'DESC')
+            ->andWhere('o.isDeleted = :isDeleted')
+            ->setParameter('isDeleted', false);
 
         if (isset($criteria['title']) && $criteria['title'] !== '') {
             $qb->andWhere('o.title LIKE :title')
@@ -44,7 +46,9 @@ class OfficialRepository extends ServiceEntityRepository
     public function findActiveArticles(?int $limit = null, ?int $offset = null): array
     {
         $qb = $this->createQueryBuilder('o')
-            ->orderBy('o.createAt', 'DESC');
+            ->orderBy('o.createAt', 'DESC')
+            ->andWhere('o.isDeleted = :isDeleted')
+            ->setParameter('isDeleted', false);
 
         if ($limit !== null) {
             $qb->setMaxResults($limit);
@@ -95,7 +99,9 @@ class OfficialRepository extends ServiceEntityRepository
     public function findByCriteria(array $criteria = [], ?int $limit = null, ?int $offset = null): array
     {
         $qb = $this->createQueryBuilder('o')
-            ->orderBy('o.createAt', 'DESC');
+            ->orderBy('o.createAt', 'DESC')
+            ->andWhere('o.isDeleted = :isDeleted')
+            ->setParameter('isDeleted', false);
 
         // 标题关键词查询
         if (isset($criteria['title']) && $criteria['title'] !== '') {

@@ -58,7 +58,7 @@ class WechatController extends AbstractController
 
             $publicAccountId = $syncArticlesDto->getAccountId();
             $articlesData = $syncArticlesDto->getArticles();
-
+            
             // 步骤1: 验证或创建微信公众号基础数据
             $publicAccount = $this->accountRepository->findOrCreate($publicAccountId);
 
@@ -401,6 +401,66 @@ class WechatController extends AbstractController
 
         } catch (\Exception $e) {
             return $this->apiResponse->error('获取文章详情失败: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    #[Route('/articles/{id}', name: 'api_wechat_article_delete', methods: ['DELETE'])]
+    public function deleteArticle(int $id): JsonResponse
+    {
+        // 添加调试日志
+        error_log('[DEBUG] WechatController::deleteArticle - 删除微信文章接口，ID: ' . $id);
+
+        try {
+            // 根据ID查找文章
+            $article = $this->articleRepository->find($id);
+
+            if (!$article) {
+                return $this->apiResponse->error('文章不存在', Response::HTTP_NOT_FOUND);
+            }
+
+            // 检查文章是否已经标记为删除
+            if ($article->getIsDeleted()) {
+                return $this->apiResponse->error('文章已被删除', Response::HTTP_GONE);
+            }
+
+            // 使用事务确保数据一致性
+            $this->entityManager->beginTransaction();
+
+            try {
+                // 软删除：标记为已删除
+                $article->setIsDeleted(true);
+
+                // 记录删除操作的时间戳
+                $article->setUpdatedAt(new \DateTime());
+
+                // 保存更改
+                $this->entityManager->persist($article);
+                $this->entityManager->flush();
+
+                // 提交事务
+                $this->entityManager->commit();
+
+                // 记录成功删除的日志
+                error_log('[DEBUG] WechatController::deleteArticle - 成功删除文章ID: ' . $id . ', 标题: ' . $article->getTitle());
+
+                return $this->apiResponse->success([
+                    'id' => $article->getId(),
+                    'title' => $article->getTitle(),
+                    'message' => '文章删除成功'
+                ], Response::HTTP_OK);
+
+            } catch (\Exception $e) {
+                // 回滚事务
+                $this->entityManager->rollback();
+
+                // 记录错误日志
+                error_log('[ERROR] WechatController::deleteArticle - 删除文章失败，ID: ' . $id . ', 错误: ' . $e->getMessage());
+
+                throw $e;
+            }
+
+        } catch (\Exception $e) {
+            return $this->apiResponse->error('删除文章失败: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 

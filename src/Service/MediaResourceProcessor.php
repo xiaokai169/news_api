@@ -343,27 +343,28 @@ class MediaResourceProcessor
 
             $replacements = 0;
 
-            // 1. 替换img标签中的src属性
-            $pattern = '/(<img[^>]+)src=["\']' . preg_quote($oldUrl, '/') . '["\']([^>]*>)/i';
+            // 1. 替换img标签中的原始src属性（确保只匹配独立的src属性）
+            $pattern = '/(<img[^>]+)(?<!data-)src=["\']' . preg_quote($oldUrl, '/') . '["\']([^>]*>)/i';
             $content = preg_replace($pattern, '$1src="' . $newUrl . '"$2', $content, -1, $count);
             $replacements += $count;
 
-            // 2. 替换img标签中的data-src属性（懒加载图片）
+            // 2. 将data-src属性替换为src属性（移除懒加载机制）
             $pattern = '/(<img[^>]+)data-src=["\']' . preg_quote($oldUrl, '/') . '["\']([^>]*>)/i';
-            $content = preg_replace($pattern, '$1data-src="' . $newUrl . '"$2', $content, -1, $count);
-            $replacements += $count;
-
-            // 3. 如果有data-src但没有src，则设置src为占位符，保持懒加载
-            $pattern = '/(<img[^>]+)data-src=["\']' . preg_quote($oldUrl, '/') . '["\']([^>]*>)/i';
-            $content = preg_replace_callback($pattern, function($matches) use ($newUrl) {
+            $content = preg_replace_callback($pattern, function($matches) use ($newUrl, $oldUrl) {
                 $imgTag = $matches[0];
-                // 检查是否已经有src属性
-                if (!preg_match('/src=["\'][^"\']*["\']/', $imgTag)) {
-                    // 添加懒加载占位符src
-                    $imgTag = str_replace('<img', '<img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjVmNWY1Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIiBmaWxsPSIjOTk5IiBmb250LXNpemU9IjE0Ij7lm77niYfliqDovb3lpLHotKU8L3RleHQ+PC9zdmc+"', $imgTag);
+
+                // 检查是否已经有src属性（确保不匹配data-src）
+                if (!preg_match('/(?<!data-)\bsrc\s*=\s*["\'][^"\']*["\']/', $imgTag)) {
+                    // 没有src属性，将data-src转换为src
+                    $imgTag = preg_replace('/data-src=["\']' . preg_quote($oldUrl, '/') . '["\']/', 'src="' . $newUrl . '"', $imgTag);
+                } else {
+                    // 已经有src属性，只移除data-src
+                    $imgTag = preg_replace('/\s+data-src=["\']' . preg_quote($oldUrl, '/') . '["\']/', '', $imgTag);
                 }
+
                 return $imgTag;
-            }, $content);
+            }, $content, -1, $count);
+            $replacements += $count;
 
             // 4. 替换背景图片URL
             $pattern = '/background-image:\s*url\(["\']?' . preg_quote($oldUrl, '/') . '["\']?\)/i';
@@ -392,24 +393,52 @@ class MediaResourceProcessor
 
             // 9. 处理标准化的URL替换（处理端口标准化后的URL）
             if ($normalizedOldUrl !== $oldUrl) {
-                $pattern = '/src=["\']' . preg_quote($normalizedOldUrl, '/') . '["\']/i';
+                $pattern = '/(?<!data-)src=["\']' . preg_quote($normalizedOldUrl, '/') . '["\']/i';
                 $content = preg_replace($pattern, 'src="' . $newUrl . '"', $content, -1, $count);
                 $replacements += $count;
 
-                $pattern = '/data-src=["\']' . preg_quote($normalizedOldUrl, '/') . '["\']/i';
-                $content = preg_replace($pattern, 'data-src="' . $newUrl . '"', $content, -1, $count);
+                // 将标准化的data-src替换为src
+                $pattern = '/(<img[^>]+)data-src=["\']' . preg_quote($normalizedOldUrl, '/') . '["\']([^>]*>)/i';
+                $content = preg_replace_callback($pattern, function($matches) use ($newUrl, $normalizedOldUrl) {
+                    $imgTag = $matches[0];
+
+                    // 检查是否已经有src属性（确保不匹配data-src）
+                    if (!preg_match('/(?<!data-)\bsrc\s*=\s*["\'][^"\']*["\']/', $imgTag)) {
+                        // 没有src属性，将data-src转换为src
+                        $imgTag = preg_replace('/data-src=["\']' . preg_quote($normalizedOldUrl, '/') . '["\']/', 'src="' . $newUrl . '"', $imgTag);
+                    } else {
+                        // 已经有src属性，只移除data-src
+                        $imgTag = preg_replace('/\s+data-src=["\']' . preg_quote($normalizedOldUrl, '/') . '["\']/', '', $imgTag);
+                    }
+
+                    return $imgTag;
+                }, $content, -1, $count);
                 $replacements += $count;
             }
 
             // 10. 处理URL编码的情况
             $encodedOldUrl = urlencode($oldUrl);
             if ($encodedOldUrl !== $oldUrl) {
-                $pattern = '/src=["\']' . preg_quote($encodedOldUrl, '/') . '["\']/i';
+                $pattern = '/(?<!data-)src=["\']' . preg_quote($encodedOldUrl, '/') . '["\']/i';
                 $content = preg_replace($pattern, 'src="' . $newUrl . '"', $content, -1, $count);
                 $replacements += $count;
 
-                $pattern = '/data-src=["\']' . preg_quote($encodedOldUrl, '/') . '["\']/i';
-                $content = preg_replace($pattern, 'data-src="' . $newUrl . '"', $content, -1, $count);
+                // 将URL编码的data-src替换为src
+                $pattern = '/(<img[^>]+)data-src=["\']' . preg_quote($encodedOldUrl, '/') . '["\']([^>]*>)/i';
+                $content = preg_replace_callback($pattern, function($matches) use ($newUrl, $encodedOldUrl) {
+                    $imgTag = $matches[0];
+
+                    // 检查是否已经有src属性（确保不匹配data-src）
+                    if (!preg_match('/(?<!data-)\bsrc\s*=\s*["\'][^"\']*["\']/', $imgTag)) {
+                        // 没有src属性，将data-src转换为src
+                        $imgTag = preg_replace('/data-src=["\']' . preg_quote($encodedOldUrl, '/') . '["\']/', 'src="' . $newUrl . '"', $imgTag);
+                    } else {
+                        // 已经有src属性，只移除data-src
+                        $imgTag = preg_replace('/\s+data-src=["\']' . preg_quote($encodedOldUrl, '/') . '["\']/', '', $imgTag);
+                    }
+
+                    return $imgTag;
+                }, $content, -1, $count);
                 $replacements += $count;
             }
 
@@ -426,6 +455,29 @@ class MediaResourceProcessor
                 'total_replacements' => $replacements
             ]);
         }
+
+        // 12. 清理所有剩余的data-src属性，将它们转换为src属性（在所有URL映射处理完成后执行）
+        $content = preg_replace_callback('/(<img[^>]+)data-src=["\']([^"\']*)["\']([^>]*>)/i', function($matches) use ($urlMapping) {
+            $imgTag = $matches[0];
+            $dataSrcValue = $matches[2];
+
+            // 如果data-src为空，直接移除
+            if (empty($dataSrcValue)) {
+                return preg_replace('/\s*data-src=["\']["\']/', '', $imgTag);
+            }
+
+            // 检查是否已经有src属性（确保不匹配data-src）
+            if (!preg_match('/(?<!data-)\bsrc\s*=\s*["\'][^"\']*["\']/', $imgTag)) {
+                // 将data-src转换为src，如果有映射则使用映射后的URL
+                $finalSrc = isset($urlMapping[$dataSrcValue]) ? $urlMapping[$dataSrcValue] : $dataSrcValue;
+                $imgTag = preg_replace('/data-src=["\']' . preg_quote($dataSrcValue, '/') . '["\']/', 'src="' . $finalSrc . '"', $imgTag);
+            } else {
+                // 如果已经有src，则移除data-src
+                $imgTag = preg_replace('/\s+data-src=["\'][^"\']*["\']/', '', $imgTag);
+            }
+
+            return $imgTag;
+        }, $content);
 
         $this->logger->info('所有URL替换完成');
         return $content;

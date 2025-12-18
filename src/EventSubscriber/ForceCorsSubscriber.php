@@ -30,10 +30,11 @@ class ForceCorsSubscriber implements EventSubscriberInterface
         $requestHeaders = $request->headers->get('Access-Control-Request-Headers');
         $requestMethod = $request->headers->get('Access-Control-Request-Method');
 
-        // 只处理API路径的OPTIONS请求
+        // 处理API路径和API文档的OPTIONS请求
         $isApiPath = str_starts_with($path, '/api') ||
                      str_starts_with($path, '/official-api') ||
-                     str_starts_with($path, '/public-api');
+                     str_starts_with($path, '/public-api') ||
+                     str_starts_with($path, '/api_doc');
 
         // 详细日志记录OPTIONS请求
         if ($method === 'OPTIONS') {
@@ -75,10 +76,11 @@ class ForceCorsSubscriber implements EventSubscriberInterface
         $method = $request->getMethod();
         $origin = $request->headers->get('Origin');
 
-        // 只为API路径设置CORS头
+        // 为API路径和API文档设置CORS头
         $isApiPath = str_starts_with($path, '/api') ||
                      str_starts_with($path, '/official-api') ||
-                     str_starts_with($path, '/public-api');
+                     str_starts_with($path, '/public-api') ||
+                     str_starts_with($path, '/api_doc');
 
         if ($isApiPath) {
             error_log('[FORCE CORS] 响应阶段设置CORS头:');
@@ -105,20 +107,18 @@ class ForceCorsSubscriber implements EventSubscriberInterface
     private function setCorsHeaders($response, $request): void
     {
         $origin = $request->headers->get('Origin');
-        $allowedOrigin = $this->getAllowedOrigin($origin);
 
-        // 🔧 修复URL协议前缀问题
-        $processedOrigin = $this->processOriginUrl($origin);
-        if ($processedOrigin !== $origin) {
-            error_log('[FORCE CORS] Origin已修复: ' . ($origin ?? 'null') . ' -> ' . $processedOrigin);
-            $origin = $processedOrigin;
-            $allowedOrigin = $this->getAllowedOrigin($origin);
+        // 🔧 简化CORS处理逻辑，直接使用通配符或返回请求的Origin
+        if ($origin && $this->isValidOrigin($origin)) {
+            $allowedOrigin = $origin;
+        } else {
+            $allowedOrigin = '*';
         }
 
         // 设置CORS头
         $response->headers->set('Access-Control-Allow-Origin', $allowedOrigin);
         $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-        $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, x-request-id, X-Request-ID');
+        $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, x-request-id, X-Request-ID, X-Custom-Header');
         $response->headers->set('Access-Control-Max-Age', '3600');
         $response->headers->set('Access-Control-Allow-Credentials', 'false');
 
@@ -127,12 +127,10 @@ class ForceCorsSubscriber implements EventSubscriberInterface
             $response->setStatusCode(200);
         }
 
-        // 添加调试头，便于前端识别修复
-        $response->headers->set('X-CORS-Fix-Applied', $processedOrigin !== $origin ? 'true' : 'false');
-        if ($processedOrigin !== $origin) {
-            $response->headers->set('X-CORS-Original-Origin', $origin ?? 'none');
-            $response->headers->set('X-CORS-Fixed-Origin', $processedOrigin);
-        }
+        // 添加调试头
+        $response->headers->set('X-CORS-Handler', 'ForceCorsSubscriber');
+        $response->headers->set('X-CORS-Request-Origin', $origin ?? 'none');
+        $response->headers->set('X-CORS-Allowed-Origin', $allowedOrigin);
     }
 
     private function getAllowedOrigin($requestOrigin): string
@@ -160,73 +158,49 @@ class ForceCorsSubscriber implements EventSubscriberInterface
     }
 
     /**
-     * 处理Origin URL，修复协议前缀问题
-     * @param string|null $origin 原始Origin
-     * @return string 处理后的Origin
+     * 验证Origin是否有效
+     * @param string|null $origin 请求的Origin
+     * @return bool 是否有效
      */
-    private function processOriginUrl(?string $origin): string
+    private function isValidOrigin(?string $origin): bool
     {
         if (empty($origin)) {
-            return '*';
-        }
-
-        // 如果URL已经包含协议，直接返回
-        if (preg_match('/^https?:\/\//', $origin)) {
-            return $origin;
-        }
-
-        // 如果URL以localhost开头，添加http://前缀
-        if (strpos($origin, 'localhost') === 0) {
-            return 'http://' . $origin;
-        }
-
-        // 如果URL以//开头，添加https://前缀
-        if (strpos($origin, '//') === 0) {
-            return 'https:' . $origin;
-        }
-
-        // 如果URL以IP地址开头，添加http://前缀
-        if (preg_match('/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(:\d+)?/', $origin)) {
-            return 'http://' . $origin;
-        }
-
-        // 其他情况，默认添加https://前缀
-        return 'https://' . $origin;
-    }
-
-    /**
-     * 检查Origin是否匹配允许的域名（支持协议无关匹配）
-     * @param string|null $requestOrigin 请求的Origin
-     * @param string $allowedOrigin 允许的Origin
-     * @return bool 是否匹配
-     */
-    private function isOriginMatch(?string $requestOrigin, string $allowedOrigin): bool
-    {
-        if (empty($requestOrigin)) {
             return false;
         }
 
-        // 直接匹配
-        if ($requestOrigin === $allowedOrigin) {
+        // 检查是否为有效的URL格式
+        if (!preg_match('/^https?:\/\/[a-zA-Z0-9.-]+(?::\d+)?(?:\/.*)?$/', $origin)) {
+            return false;
+        }
+
+        // 检查是否为localhost或IP地址
+        $host = parse_url($origin, PHP_URL_HOST);
+        if ($host === false) {
+            return false;
+        }
+
+        // 允许localhost和本地IP
+        if ($host === 'localhost' ||
+            preg_match('/^127\.\d+\.\d+\.\d+$/', $host) ||
+            preg_match('/^192\.168\.\d+\.\d+$/', $host) ||
+            preg_match('/^10\.\d+\.\d+\.\d+$/', $host)) {
             return true;
         }
 
-        // 处理通配符匹配
-        if ($allowedOrigin === '*') {
+        // 检查环境变量中是否允许该域名
+        $corsAllowOrigin = $_ENV['CORS_ALLOW_ORIGIN'] ?? '*';
+        if ($corsAllowOrigin === '*') {
             return true;
         }
 
-        // 移除协议进行比较
-        $requestHost = preg_replace('/^https?:\/\//', '', $requestOrigin);
-        $allowedHost = preg_replace('/^https?:\/\//', '', $allowedOrigin);
-
-        // 比较主机名（包含端口）
-        if ($requestHost === $allowedHost) {
-            return true;
+        $allowedOrigins = array_map('trim', explode(',', $corsAllowOrigin));
+        foreach ($allowedOrigins as $allowedOrigin) {
+            if (strcasecmp($origin, $allowedOrigin) === 0) {
+                return true;
+            }
         }
 
-        // 比较处理后的URL
-        $processedOrigin = $this->processOriginUrl($requestOrigin);
-        return $processedOrigin === $allowedOrigin;
+        return false;
     }
+
 }

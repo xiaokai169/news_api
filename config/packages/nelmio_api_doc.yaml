@@ -18,8 +18,10 @@ nelmio_api_doc:
                 name: API Support
                 email: support@example.com
         servers:
-            - url: http://localhost:8000
-              description: 本地开发服务器
+            - url: https://127.0.0.1:8000
+              description: 本地开发服务器 (HTTPS)
+            - url: http://127.0.0.1:8000
+              description: 本地开发服务器 (HTTP)
             - url: https://newsapi.arab-bee.com
               description: 生产环境服务器
         components:
