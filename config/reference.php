@@ -1613,7 +1613,6 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
  *         mapping_override?: array<string, scalar|null>,
  *     },
  *     serializer?: array{
- *         entity_class_metadata_factory?: bool, // Default: false
  *         form_error_normalizer?: bool, // Default: false
  *         knp_pagination_normalizer?: bool, // Default: false
  *     },
