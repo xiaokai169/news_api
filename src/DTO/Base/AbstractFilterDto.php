@@ -29,7 +29,7 @@ abstract class AbstractFilterDto extends AbstractDto
     #[Assert\Positive(message: '每页数量必须大于0')]
     #[Assert\LessThanOrEqual(value: 100, message: '每页数量不能超过100')]
     #[Groups(['filter:read', 'filter:write'])]
-    protected int $limit = 20;
+    protected int $size = 20;
 
     /**
      * 排序字段
@@ -211,21 +211,90 @@ abstract class AbstractFilterDto extends AbstractDto
      *
      * @return int
      */
-    public function getLimit(): int
+    public function getSize(): int
     {
-        return $this->limit;
+        return $this->size;
     }
 
     /**
      * 设置每页数量
      *
+     * @param int $size
+     * @return self
+     */
+    public function setSize(int $size): self
+    {
+        $this->size = max(1, min(100, $size));
+        return $this;
+    }
+
+    /**
+     * 向后兼容性方法：获取页码
+     *
+     * @deprecated 使用 getPage() 替代
+     * @return int
+     */
+    public function getCurrent(): int
+    {
+        return $this->page;
+    }
+
+    /**
+     * 向后兼容性方法：设置当前页码
+     *
+     * @deprecated 使用 setPage() 替代
+     * @param int $current
+     * @return self
+     */
+    public function setCurrent(int $current): self
+    {
+        return $this->setPage($current);
+    }
+
+    /**
+     * 向后兼容性方法：获取每页数量
+     *
+     * @deprecated 使用 getSize() 替代
+     * @return int
+     */
+    public function getPageSize(): int
+    {
+        return $this->size;
+    }
+
+    /**
+     * 向后兼容性方法：设置每页数量
+     *
+     * @deprecated 使用 setSize() 替代
+     * @param int $pageSize
+     * @return self
+     */
+    public function setPageSize(int $pageSize): self
+    {
+        return $this->setSize($pageSize);
+    }
+
+    /**
+     * 向后兼容性方法：获取每页数量
+     *
+     * @deprecated 使用 getSize() 替代
+     * @return int
+     */
+    public function getLimit(): int
+    {
+        return $this->size;
+    }
+
+    /**
+     * 向后兼容性方法：设置每页数量
+     *
+     * @deprecated 使用 setSize() 替代
      * @param int $limit
      * @return self
      */
     public function setLimit(int $limit): self
     {
-        $this->limit = max(1, min(100, $limit));
-        return $this;
+        return $this->setSize($limit);
     }
 
     /**
@@ -600,7 +669,7 @@ abstract class AbstractFilterDto extends AbstractDto
      */
     public function getOffset(): int
     {
-        return ($this->page - 1) * $this->limit;
+        return ($this->page - 1) * $this->size;
     }
 
     /**
@@ -689,7 +758,7 @@ abstract class AbstractFilterDto extends AbstractDto
     {
         return [
             'page' => $this->page,
-            'limit' => $this->limit,
+            'size' => $this->size,
             'offset' => $this->getOffset(),
             'sortBy' => $this->sortBy,
             'sortDirection' => $this->sortDirection,
@@ -700,6 +769,9 @@ abstract class AbstractFilterDto extends AbstractDto
             'hasDateRangeConditions' => $this->hasDateRangeConditions(),
             'includeDeleted' => $this->includeDeleted,
             'countOnly' => $this->countOnly,
+            // 保持向后兼容性
+            'current' => $this->page,
+            'pageSize' => $this->size,
         ];
     }
 
@@ -712,7 +784,7 @@ abstract class AbstractFilterDto extends AbstractDto
     {
         return array_merge($this->getPublicProperties(), [
             'page' => $this->page,
-            'limit' => $this->limit,
+            'size' => $this->size,
             'sortBy' => $this->sortBy,
             'sortDirection' => $this->sortDirection,
             'keyword' => $this->keyword,
@@ -729,6 +801,9 @@ abstract class AbstractFilterDto extends AbstractDto
             'includeDeleted' => $this->includeDeleted,
             'countOnly' => $this->countOnly,
             'customFilters' => $this->customFilters,
+            // 保持向后兼容性
+            'current' => $this->page,
+            'pageSize' => $this->size,
         ]);
     }
 
@@ -742,13 +817,19 @@ abstract class AbstractFilterDto extends AbstractDto
     {
         $instance = new static();
 
-        // 设置分页参数
+        // 设置分页参数 - 优先使用新字段名
         if (isset($data['page'])) {
             $instance->setPage($data['page']);
+        } elseif (isset($data['current'])) {
+            $instance->setPage($data['current']); // 向后兼容
         }
 
-        if (isset($data['limit'])) {
-            $instance->setLimit($data['limit']);
+        if (isset($data['size'])) {
+            $instance->setSize($data['size']);
+        } elseif (isset($data['pageSize'])) {
+            $instance->setSize($data['pageSize']); // 向后兼容
+        } elseif (isset($data['limit'])) {
+            $instance->setSize($data['limit']); // 向后兼容
         }
 
         // 设置排序参数
@@ -836,7 +917,7 @@ abstract class AbstractFilterDto extends AbstractDto
     {
         return new PaginationDto([
             'page' => $this->page,
-            'limit' => $this->limit
+            'size' => $this->size
         ]);
     }
 
@@ -862,13 +943,19 @@ abstract class AbstractFilterDto extends AbstractDto
      */
     public function populateFromData(array $data): self
     {
-        // 设置分页参数
+        // 设置分页参数 - 优先使用新字段名
         if (isset($data['page'])) {
             $this->setPage((int)$data['page']);
+        } elseif (isset($data['current'])) {
+            $this->setPage((int)$data['current']); // 向后兼容
         }
 
-        if (isset($data['limit'])) {
-            $this->setLimit((int)$data['limit']);
+        if (isset($data['size'])) {
+            $this->setSize((int)$data['size']);
+        } elseif (isset($data['pageSize'])) {
+            $this->setSize((int)$data['pageSize']); // 向后兼容
+        } elseif (isset($data['limit'])) {
+            $this->setSize((int)$data['limit']); // 向后兼容
         }
 
         // 设置排序参数

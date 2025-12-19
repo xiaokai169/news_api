@@ -64,11 +64,9 @@ class WechatPublicAccountController extends AbstractController
 
         return $this->apiResponse->success([
             'items' => $items,
-            'total' => $total,
-            'page' => $page,
-            'limit' => $limit,
-            'pages' => $pages,
-            'filter' => $filter->getFilterSummary(), // 添加过滤条件摘要到响应中
+            'currentPageNumber' => $page,
+            'itemsPerPage' => $limit,
+            'totalCount' => $total,
         ], Response::HTTP_OK, ['groups' => ['wechat_account:read']]);
     }
 

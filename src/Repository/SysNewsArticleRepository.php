@@ -23,7 +23,7 @@ class SysNewsArticleRepository extends ServiceEntityRepository
     /**
      * 根据查询条件获取文章列表（支持分页和排序）
      */
-    public function findByCriteria(array $criteria = [], ?int $limit = null, ?int $offset = null, ?string $sortBy = 'createTime', ?string $sortOrder = 'desc'): array
+    public function findByCriteria(array $criteria = [], ?int $limit = null, ?int $offset = null, ?string $sortBy = 'releaseTime', ?string $sortOrder = 'desc'): array
     {
 
         $qb = $this->createQueryBuilder('article')
@@ -126,7 +126,7 @@ class SysNewsArticleRepository extends ServiceEntityRepository
         $validSortFields = ['id', 'createTime', 'updateTime', 'releaseTime', 'name'];
         $validSortOrders = ['asc', 'desc'];
 
-        $sortBy = in_array($sortBy, $validSortFields) ? $sortBy : 'createTime';
+        $sortBy = in_array($sortBy, $validSortFields) ? $sortBy : 'releaseTime';
         $sortOrder = in_array(strtolower($sortOrder), $validSortOrders) ? strtolower($sortOrder) : 'desc';
 
         $qb->orderBy('article.' . $sortBy, $sortOrder);
@@ -365,7 +365,7 @@ class SysNewsArticleRepository extends ServiceEntityRepository
     /**
      * 根据查询条件获取文章列表（包含用户信息）
      */
-    public function findByCriteriaWithUser(array $criteria = [], ?int $limit = null, ?int $offset = null, ?string $sortBy = 'createTime', ?string $sortOrder = 'desc'): array
+    public function findByCriteriaWithUser(array $criteria = [], ?int $limit = null, ?int $offset = null, ?string $sortBy = 'releaseTime', ?string $sortOrder = 'desc'): array
     {
         $qb = $this->createQueryBuilder('article')
             ->leftJoin('article.category', 'category')
@@ -470,7 +470,7 @@ class SysNewsArticleRepository extends ServiceEntityRepository
         $validSortFields = ['id', 'createTime', 'updateTime', 'releaseTime', 'name'];
         $validSortOrders = ['asc', 'desc'];
 
-        $sortBy = in_array($sortBy, $validSortFields) ? $sortBy : 'createTime';
+        $sortBy = in_array($sortBy, $validSortFields) ? $sortBy : 'releaseTime';
         $sortOrder = in_array(strtolower($sortOrder), $validSortOrders) ? strtolower($sortOrder) : 'desc';
 
         $qb->orderBy('article.' . $sortBy, $sortOrder);
@@ -652,7 +652,7 @@ class SysNewsArticleRepository extends ServiceEntityRepository
             ->andWhere('article.status != :deletedStatus')
             ->setParameter('activeStatus', SysNewsArticle::STATUS_ACTIVE)
             ->setParameter('deletedStatus', SysNewsArticle::STATUS_DELETED)
-            ->orderBy('article.createTime', 'DESC');
+            ->orderBy('article.releaseTime', 'DESC');
 
         if ($limit !== null) {
             $qb->setMaxResults($limit);

@@ -162,6 +162,9 @@ class NewsController extends AbstractController
                     return $this->apiResponse->error('发布时间格式不正确', Response::HTTP_BAD_REQUEST);
                 }
                 $article->setReleaseTime($releaseTime);
+            } else {
+                // 当 releaseTime 为空时，设置当前时间作为默认值
+                $article->setReleaseTime(new \DateTime());
             }
 
             // 设置状态
@@ -384,8 +387,8 @@ class NewsController extends AbstractController
             $releaseTimeChanged = false;
             if ($updateDto->releaseTime !== null) {
                 if (empty($updateDto->releaseTime)) {
-                    // 从有到无：删除预约时间
-                    $article->setReleaseTime(null);
+                    // 当 releaseTime 被设置为空字符串时，设置当前时间作为默认值
+                    $article->setReleaseTime(new \DateTime());
                     $releaseTimeChanged = true;
                 } else {
                     $newReleaseTime = $updateDto->getReleaseTimeDateTime();

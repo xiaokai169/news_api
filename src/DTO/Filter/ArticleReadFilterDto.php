@@ -396,13 +396,19 @@ class ArticleReadFilterDto extends AbstractFilterDto
         $dto = new static();
         $dto->populateFromData($data);
 
-        // 设置父类属性
+        // 设置父类属性 - 支持新旧参数名
         if (isset($data['page'])) {
             $dto->setPage($data['page']);
+        } elseif (isset($data['current'])) {
+            $dto->setPage($data['current']);
         }
 
-        if (isset($data['limit'])) {
-            $dto->setLimit($data['limit']);
+        if (isset($data['size'])) {
+            $dto->setSize($data['size']);
+        } elseif (isset($data['pageSize'])) {
+            $dto->setSize($data['pageSize']);
+        } elseif (isset($data['limit'])) {
+            $dto->setSize($data['limit']);
         }
 
         if (isset($data['sortBy'])) {

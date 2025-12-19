@@ -79,13 +79,13 @@ class SysNewsArticle
     #[Groups(['sysNewsArticle:read', 'sysNewsArticle:write'])]
     private ?SysNewsArticleCategory $category = null;
 
-    #[ORM\Column(name: 'update_time', type: Types::DATETIME_MUTABLE, nullable: true)]
+    #[ORM\Column(name: 'update_at', type: Types::DATETIME_MUTABLE, nullable: true)]
     #[Groups(['sysNewsArticle:read'])]
     private ?\DateTimeInterface $updateTime = null;
 
-    #[ORM\Column(name: 'create_time', type: Types::DATETIME_MUTABLE, nullable: true)]
+    #[ORM\Column(name: 'created_at', type: Types::DATETIME_MUTABLE, nullable: true)]
     #[Groups(['sysNewsArticle:read'])]
-    private ?\DateTimeInterface $createTime = null;
+    private ?\DateTimeInterface $createdAt = null;
 
     #[ORM\Column(name: 'view_count', type: Types::INTEGER, options: ['default' => 0])]
     #[Groups(['sysNewsArticle:read'])]
@@ -97,12 +97,12 @@ class SysNewsArticle
     }
 
     #[ORM\PrePersist]
-    private function setCreateTimeValue(): void
+    private function setCreatedAtValue(): void
     {
         $currentTime = new \DateTime();
 
-        if ($this->createTime === null) {
-            $this->createTime = $currentTime;
+        if ($this->createdAt === null) {
+            $this->createdAt = $currentTime;
         }
         if ($this->updateTime === null) {
             $this->updateTime = $currentTime;
@@ -215,15 +215,15 @@ class SysNewsArticle
         return $this;
     }
 
-    public function getCreateTime(): ?\DateTimeInterface
+    public function getCreatedAt(): ?\DateTimeInterface
     {
-        return $this->createTime;
+        return $this->createdAt;
     }
 
-    // 移除 setCreateTime 方法，防止外部修改创建时间
-    // public function setCreateTime(\DateTimeInterface $createTime): self
+    // 移除 setCreatedAt 方法，防止外部修改创建时间
+    // public function setCreatedAt(\DateTimeInterface $createdAt): self
     // {
-    //     $this->createTime = $createTime;
+    //     $this->createdAt = $createdAt;
     //     return $this;
     // }
 
@@ -325,9 +325,9 @@ class SysNewsArticle
     /**
      * 添加格式化时间的方法，方便前端显示
      */
-    public function getCreateTimeFormatted(): string
+    public function getCreatedAtFormatted(): string
     {
-        return $this->createTime ? $this->createTime->format('Y-m-d H:i:s') : '';
+        return $this->createdAt ? $this->createdAt->format('Y-m-d H:i:s') : '';
     }
 
     public function getUpdateTimeFormatted(): string

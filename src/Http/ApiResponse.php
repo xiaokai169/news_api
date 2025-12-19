@@ -65,10 +65,9 @@ readonly class ApiResponse
     {
         $data = [
             'items' => $this->normalizeData($items, $context),
-            'total' => $total,
-            'page' => $page,
-            'limit' => $limit,
-            'pages' => $pages,
+            'currentPageNumber' => $page,
+            'itemsPerPage' => $limit,
+            'totalCount' => $total,
         ];
         // 分页查询成功返回 200 OK
         return $this->success(

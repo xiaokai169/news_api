@@ -213,13 +213,19 @@ class WechatAccountFilterDto extends AbstractFilterDto
      */
     public function populateFromData(array $data): self
     {
-        // 设置父类属性
+        // 设置父类属性 - 支持新旧参数名
         if (isset($data['page'])) {
             $this->setPage($data['page']);
+        } elseif (isset($data['current'])) {
+            $this->setPage($data['current']);
         }
 
-        if (isset($data['limit'])) {
-            $this->setLimit($data['limit']);
+        if (isset($data['size'])) {
+            $this->setSize($data['size']);
+        } elseif (isset($data['pageSize'])) {
+            $this->setSize($data['pageSize']);
+        } elseif (isset($data['limit'])) {
+            $this->setSize($data['limit']);
         }
 
         if (isset($data['sortBy'])) {
@@ -673,13 +679,19 @@ class WechatAccountFilterDto extends AbstractFilterDto
         $dto = new static();
         $dto->populateFromData($data);
 
-        // 设置父类属性
+        // 设置父类属性 - 支持新旧参数名
         if (isset($data['page'])) {
             $dto->setPage($data['page']);
+        } elseif (isset($data['current'])) {
+            $dto->setPage($data['current']);
         }
 
-        if (isset($data['limit'])) {
-            $dto->setLimit($data['limit']);
+        if (isset($data['size'])) {
+            $dto->setSize($data['size']);
+        } elseif (isset($data['pageSize'])) {
+            $dto->setSize($data['pageSize']);
+        } elseif (isset($data['limit'])) {
+            $dto->setSize($data['limit']);
         }
 
         if (isset($data['sortBy'])) {

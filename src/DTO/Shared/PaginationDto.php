@@ -25,7 +25,7 @@ class PaginationDto extends AbstractDto
     #[Assert\Type(type: 'integer', message: '当前页码必须是整数')]
     #[Assert\Positive(message: '当前页码必须大于0')]
     #[Groups(['pagination:read', 'pagination:write'])]
-    protected int $currentPage;
+    protected int $page;
 
     /**
      * 每页记录数
@@ -34,7 +34,7 @@ class PaginationDto extends AbstractDto
     #[Assert\Positive(message: '每页记录数必须大于0')]
     #[Assert\LessThanOrEqual(value: 100, message: '每页记录数不能超过100')]
     #[Groups(['pagination:read', 'pagination:write'])]
-    protected int $perPage;
+    protected int $size;
 
     /**
      * 总记录数
@@ -127,10 +127,10 @@ class PaginationDto extends AbstractDto
      * @param int $perPage 每页记录数
      * @param int $totalItems 总记录数
      */
-    public function __construct(int $currentPage = 1, int $perPage = 20, int $totalItems = 0)
+    public function __construct(int $page = 1, int $size = 20, int $totalItems = 0)
     {
-        $this->currentPage = max(1, $currentPage);
-        $this->perPage = max(1, min(100, $perPage));
+        $this->page = max(1, $page);
+        $this->size = max(1, min(100, $size));
         $this->totalItems = max(0, $totalItems);
 
         $this->calculatePagination();
@@ -142,23 +142,23 @@ class PaginationDto extends AbstractDto
     protected function calculatePagination(): void
     {
         // 计算总页数
-        $this->totalPages = $this->perPage > 0 ? (int) ceil($this->totalItems / $this->perPage) : 0;
+        $this->totalPages = $this->size > 0 ? (int) ceil($this->totalItems / $this->size) : 0;
 
         // 计算偏移量
-        $this->offset = ($this->currentPage - 1) * $this->perPage;
+        $this->offset = ($this->page - 1) * $this->size;
 
         // 计算是否有上一页和下一页
-        $this->hasPreviousPage = $this->currentPage > 1;
-        $this->hasNextPage = $this->currentPage < $this->totalPages;
+        $this->hasPreviousPage = $this->page > 1;
+        $this->hasNextPage = $this->page < $this->totalPages;
 
         // 计算上一页和下一页页码
-        $this->previousPage = $this->hasPreviousPage ? $this->currentPage - 1 : null;
-        $this->nextPage = $this->hasNextPage ? $this->currentPage + 1 : null;
+        $this->previousPage = $this->hasPreviousPage ? $this->page - 1 : null;
+        $this->nextPage = $this->hasNextPage ? $this->page + 1 : null;
 
         // 计算当前页的起始和结束记录数
         if ($this->totalItems > 0) {
             $this->from = $this->offset + 1;
-            $this->to = min($this->offset + $this->perPage, $this->totalItems);
+            $this->to = min($this->offset + $this->size, $this->totalItems);
         } else {
             $this->from = 0;
             $this->to = 0;
@@ -175,8 +175,8 @@ class PaginationDto extends AbstractDto
     {
         $this->summary = [
             'showing' => $this->totalItems > 0 ? sprintf('显示第 %d - %d 项，共 %d 项', $this->from, $this->to, $this->totalItems) : '暂无数据',
-            'current_page_info' => sprintf('第 %d 页，共 %d 页', $this->currentPage, $this->totalPages),
-            'items_per_page' => sprintf('每页显示 %d 项', $this->perPage),
+            'current_page_info' => sprintf('第 %d 页，共 %d 页', $this->page, $this->totalPages),
+            'items_per_page' => sprintf('每页显示 %d 项', $this->size),
             'total_items' => sprintf('总共 %d 项', $this->totalItems),
         ];
     }
@@ -186,20 +186,20 @@ class PaginationDto extends AbstractDto
      *
      * @return int
      */
-    public function getCurrentPage(): int
+    public function getPage(): int
     {
-        return $this->currentPage;
+        return $this->page;
     }
 
     /**
      * 设置当前页码
      *
-     * @param int $currentPage
+     * @param int $page
      * @return self
      */
-    public function setCurrentPage(int $currentPage): self
+    public function setPage(int $page): self
     {
-        $this->currentPage = max(1, $currentPage);
+        $this->page = max(1, $page);
         $this->calculatePagination();
         return $this;
     }
@@ -209,22 +209,110 @@ class PaginationDto extends AbstractDto
      *
      * @return int
      */
-    public function getPerPage(): int
+    public function getSize(): int
     {
-        return $this->perPage;
+        return $this->size;
     }
 
     /**
      * 设置每页记录数
+     *
+     * @param int $size
+     * @return self
+     */
+    public function setSize(int $size): self
+    {
+        $this->size = max(1, min(100, $size));
+        $this->calculatePagination();
+        return $this;
+    }
+
+    /**
+     * 向后兼容性方法：获取当前页码
+     *
+     * @deprecated 使用 getPage() 替代
+     * @return int
+     */
+    public function getCurrent(): int
+    {
+        return $this->page;
+    }
+
+    /**
+     * 向后兼容性方法：设置当前页码
+     *
+     * @deprecated 使用 setPage() 替代
+     * @param int $current
+     * @return self
+     */
+    public function setCurrent(int $current): self
+    {
+        return $this->setPage($current);
+    }
+
+    /**
+     * 向后兼容性方法：获取每页记录数
+     *
+     * @deprecated 使用 getSize() 替代
+     * @return int
+     */
+    public function getPageSize(): int
+    {
+        return $this->size;
+    }
+
+    /**
+     * 向后兼容性方法：设置每页记录数
+     *
+     * @deprecated 使用 setSize() 替代
+     * @param int $pageSize
+     * @return self
+     */
+    public function setPageSize(int $pageSize): self
+    {
+        return $this->setSize($pageSize);
+    }
+
+    /**
+     * 获取当前页码（别名方法，保持向后兼容）
+     *
+     * @return int
+     */
+    public function getCurrentPage(): int
+    {
+        return $this->current;
+    }
+
+    /**
+     * 设置当前页码（别名方法，保持向后兼容）
+     *
+     * @param int $currentPage
+     * @return self
+     */
+    public function setCurrentPage(int $currentPage): self
+    {
+        return $this->setCurrent($currentPage);
+    }
+
+    /**
+     * 获取每页记录数（别名方法，保持向后兼容）
+     *
+     * @return int
+     */
+    public function getPerPage(): int
+    {
+        return $this->pageSize;
+    }
+
+    /**
+     * 设置每页记录数（别名方法，保持向后兼容）
      *
      * @param int $perPage
      * @return self
      */
     public function setPerPage(int $perPage): self
     {
-        $this->perPage = max(1, min(100, $perPage));
-        $this->calculatePagination();
-        return $this;
+        return $this->setPageSize($perPage);
     }
 
     /**
@@ -403,7 +491,7 @@ class PaginationDto extends AbstractDto
      */
     public function isFirstPage(): bool
     {
-        return $this->currentPage === 1;
+        return $this->page === 1;
     }
 
     /**
@@ -413,7 +501,7 @@ class PaginationDto extends AbstractDto
      */
     public function isLastPage(): bool
     {
-        return $this->currentPage === $this->totalPages || $this->totalPages === 0;
+        return $this->page === $this->totalPages || $this->totalPages === 0;
     }
 
     /**
@@ -430,8 +518,8 @@ class PaginationDto extends AbstractDto
             return $pages;
         }
 
-        $start = max(1, $this->currentPage - $range);
-        $end = min($this->totalPages, $this->currentPage + $range);
+        $start = max(1, $this->page - $range);
+        $end = min($this->totalPages, $this->page + $range);
 
         for ($i = $start; $i <= $end; $i++) {
             $pages[] = $i;
@@ -448,21 +536,21 @@ class PaginationDto extends AbstractDto
      * @param int $perPage 每页记录数
      * @return static
      */
-    public static function fromTotal(int $totalItems, int $currentPage = 1, int $perPage = 20): static
+    public static function fromTotal(int $totalItems, int $page = 1, int $size = 20): static
     {
-        return new static($currentPage, $perPage, $totalItems);
+        return new static($page, $size, $totalItems);
     }
 
     /**
      * 创建空分页对象
      *
-     * @param int $currentPage 当前页码
-     * @param int $perPage 每页记录数
+     * @param int $page 当前页码
+     * @param int $size 每页记录数
      * @return static
      */
-    public static function empty(int $currentPage = 1, int $perPage = 20): static
+    public static function empty(int $page = 1, int $size = 20): static
     {
-        return new static($currentPage, $perPage, 0);
+        return new static($page, $size, 0);
     }
 
     /**
@@ -473,8 +561,8 @@ class PaginationDto extends AbstractDto
     public function toArray(): array
     {
         return [
-            'currentPage' => $this->currentPage,
-            'perPage' => $this->perPage,
+            'page' => $this->page,
+            'size' => $this->size,
             'totalItems' => $this->totalItems,
             'totalPages' => $this->totalPages,
             'hasPreviousPage' => $this->hasPreviousPage,
@@ -486,6 +574,11 @@ class PaginationDto extends AbstractDto
             'offset' => $this->offset,
             'links' => $this->links,
             'summary' => $this->summary,
+            // 保持向后兼容的别名
+            'current' => $this->page,
+            'currentPage' => $this->page,
+            'pageSize' => $this->size,
+            'perPage' => $this->size,
         ];
     }
 
@@ -497,11 +590,11 @@ class PaginationDto extends AbstractDto
      */
     public static function fromArray(array $data): static
     {
-        $currentPage = $data['currentPage'] ?? 1;
-        $perPage = $data['perPage'] ?? 20;
+        $page = $data['page'] ?? $data['current'] ?? $data['currentPage'] ?? 1;
+        $size = $data['size'] ?? $data['pageSize'] ?? $data['perPage'] ?? 20;
         $totalItems = $data['totalItems'] ?? 0;
 
-        $instance = new static($currentPage, $perPage, $totalItems);
+        $instance = new static($page, $size, $totalItems);
 
         if (isset($data['links'])) {
             $instance->setLinks($data['links']);
@@ -518,12 +611,16 @@ class PaginationDto extends AbstractDto
     public function toSimpleArray(): array
     {
         return [
-            'current_page' => $this->currentPage,
-            'per_page' => $this->perPage,
+            'page' => $this->page,
+            'size' => $this->size,
             'total' => $this->totalItems,
-            'last_page' => $this->totalPages,
+            'pages' => $this->totalPages,
             'from' => $this->from,
             'to' => $this->to,
+            // 保持向后兼容的别名
+            'current_page' => $this->page,
+            'per_page' => $this->size,
+            'last_page' => $this->totalPages,
         ];
     }
 
@@ -535,7 +632,7 @@ class PaginationDto extends AbstractDto
     public function toLaravelStyle(): array
     {
         return [
-            'current_page' => $this->currentPage,
+            'current_page' => $this->page,
             'data' => [], // 需要外部填充数据
             'first_page_url' => $this->links['first'] ?? null,
             'from' => $this->from,
@@ -543,7 +640,7 @@ class PaginationDto extends AbstractDto
             'last_page_url' => $this->links['last'] ?? null,
             'next_page_url' => $this->hasNextPage ? ($this->links['next'] ?? null) : null,
             'path' => $this->links['self'] ?? null,
-            'per_page' => $this->perPage,
+            'per_page' => $this->size,
             'prev_page_url' => $this->hasPreviousPage ? ($this->links['prev'] ?? null) : null,
             'to' => $this->to,
             'total' => $this->totalItems,

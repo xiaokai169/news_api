@@ -266,7 +266,65 @@ class WechatArticleSyncService
                 'update_time_value' => $articleData['update_time'] ?? 'not_set'
             ]);
 
-            // 设置发布时间
+            // 设置发布时间到 releaseTime 字段 - 修复后的时间处理逻辑
+            $releaseTime = null;
+            $timeSource = '';
+
+            // 优先级1: 使用微信API的 publish_time
+            if (isset($articleData['publish_time']) && !empty($articleData['publish_time'])) {
+                $releaseTime = \DateTime::createFromFormat('U', $articleData['publish_time']);
+                if ($releaseTime) {
+                    $timeSource = 'publish_time';
+                    $this->logger->debug('使用发布时间', ['source' => 'publish_time', 'timestamp' => $articleData['publish_time']]);
+                } else {
+                    $this->logger->warning('创建发布时间DateTime失败', ['publish_time' => $articleData['publish_time']]);
+                }
+            }
+
+            // 优先级2: 使用 update_time 作为备选
+            if ($releaseTime === null && isset($articleData['update_time']) && !empty($articleData['update_time'])) {
+                $releaseTime = \DateTime::createFromFormat('U', $articleData['update_time']);
+                if ($releaseTime) {
+                    $timeSource = 'update_time';
+                    $this->logger->debug('使用更新时间作为发布时间', ['source' => 'update_time', 'timestamp' => $articleData['update_time']]);
+                } else {
+                    $this->logger->warning('创建更新时间DateTime失败', ['update_time' => $articleData['update_time']]);
+                }
+            }
+
+            // 优先级3: 使用当前时间作为默认值，确保永远不会为空
+            if ($releaseTime === null) {
+                $releaseTime = new \DateTime();
+                $timeSource = 'current_time';
+                $this->logger->warning('未找到有效的时间字段，使用当前时间作为默认值', [
+                    'articleId' => $articleId,
+                    'available_fields' => array_keys($articleData),
+                    'has_publish_time' => isset($articleData['publish_time']),
+                    'has_update_time' => isset($articleData['update_time']),
+                    'default_time' => $releaseTime->format('Y-m-d H:i:s')
+                ]);
+            }
+
+            // 设置最终的时间值，确保格式正确
+            if ($releaseTime instanceof \DateTime) {
+                $formattedTime = $releaseTime->format('Y-m-d H:i:s');
+                $article->setReleaseTime($formattedTime);
+                $this->logger->info('发布时间设置成功', [
+                    'articleId' => $articleId,
+                    'timeSource' => $timeSource,
+                    'releaseTime' => $formattedTime
+                ]);
+            } else {
+                // 额外的安全检查，理论上不应该到达这里
+                $fallbackTime = new \DateTime();
+                $article->setReleaseTime($fallbackTime->format('Y-m-d H:i:s'));
+                $this->logger->error('时间创建失败，使用紧急备用时间', [
+                    'articleId' => $articleId,
+                    'fallbackTime' => $fallbackTime->format('Y-m-d H:i:s')
+                ]);
+            }
+
+            // 设置更新时间
             if (isset($articleData['update_time'])) {
                 $updateTime = \DateTime::createFromFormat('U', $articleData['update_time']);
                 if ($updateTime) {

@@ -24,6 +24,19 @@ use Symfony\Component\Serializer\Annotation\Groups;
 class NewsFilterDto extends AbstractFilterDto
 {
     /**
+     * 构造函数 - 设置默认排序为发布时间倒序
+     *
+     * @param array $data 初始化数据
+     */
+    public function __construct(array $data = [])
+    {
+        // 设置默认排序字段为发布时间倒序
+        $this->sortBy = 'releaseTime';
+        $this->sortDirection = 'desc';
+
+        parent::__construct($data);
+    }
+    /**
      * 商户ID过滤
      */
     #[Assert\Type(type: 'integer', message: '商户ID必须是整数')]
@@ -186,16 +199,6 @@ class NewsFilterDto extends AbstractFilterDto
     )]
     #[Groups(['newsFilter:read', 'newsFilter:write'])]
     public array $tags = [];
-
-    /**
-     * 构造函数
-     *
-     * @param array $data 初始化数据
-     */
-    public function __construct(array $data = [])
-    {
-        parent::__construct($data);
-    }
 
     /**
      * 从数据填充DTO
@@ -559,13 +562,19 @@ class NewsFilterDto extends AbstractFilterDto
         $dto = new static();
         $dto->populateFromData($data);
 
-        // 设置父类属性
+        // 设置父类属性 - 支持新旧参数名
         if (isset($data['page'])) {
             $dto->setPage($data['page']);
+        } elseif (isset($data['current'])) {
+            $dto->setPage($data['current']);
         }
 
-        if (isset($data['limit'])) {
-            $dto->setLimit($data['limit']);
+        if (isset($data['size'])) {
+            $dto->setSize($data['size']);
+        } elseif (isset($data['pageSize'])) {
+            $dto->setSize($data['pageSize']);
+        } elseif (isset($data['limit'])) {
+            $dto->setSize($data['limit']);
         }
 
         if (isset($data['sortBy'])) {
@@ -677,9 +686,9 @@ class NewsFilterDto extends AbstractFilterDto
         }
 
         // 分页
-        if ($this->limit !== null) {
-            $criteria->setMaxResults($this->limit);
-            $criteria->setFirstResult(($this->page - 1) * $this->limit);
+        if ($this->size !== null) {
+            $criteria->setMaxResults($this->size);
+            $criteria->setFirstResult(($this->page - 1) * $this->size);
         }
 
         return $criteria;
@@ -750,9 +759,9 @@ class NewsFilterDto extends AbstractFilterDto
         }
 
         // 分页
-        if ($this->limit !== null) {
-            $qb->setMaxResults($this->limit);
-            $qb->setFirstResult(($this->page - 1) * $this->limit);
+        if ($this->size !== null) {
+            $qb->setMaxResults($this->size);
+            $qb->setFirstResult(($this->page - 1) * $this->size);
         }
 
         return $qb;

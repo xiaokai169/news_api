@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新闻API修复控制台</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .content {
+            padding: 20px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .section-header {
+            background: #f8f9fa;
+            padding: 15px;
+            border-bottom: 1px solid #e0e0e0;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .section-content {
+            padding: 15px;
+        }
+
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        .btn:hover {
+            background: #0056b3;
+        }
+
+        .btn.success {
+            background: #28a745;
+        }
+
+        .btn.success:hover {
+            background: #1e7e34;
+        }
+
+        .btn.warning {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .btn.warning:hover {
+            background: #e0a800;
+        }
+
+        .btn.danger {
+            background: #dc3545;
+        }
+
+        .btn.danger:hover {
+            background: #c82333;
+        }
+
+        .log {
+            background: #1e1e1e;
+            color: #fff;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            margin-top: 10px;
+        }
+
+        .status {
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .status.pending {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .status.success {
+            background: #28a745;
+            color: white;
+        }
+
+        .status.error {
+            background: #dc3545;
+            color: white;
+        }
+
+        .progress {
+            width: 100%;
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #20c997);
+            transition: width 0.3s;
+            width: 0%;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .metric {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border-left: 4px solid #007bff;
+        }
+
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+
+        .metric-label {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 新闻API修复控制台</h1>
+            <p>解决 Doctrine 缓存中的 update_at 字段问题</p>
+        </div>
+
+        <div class="content">
+            <!-- 总体进度 -->
+            <div class="section">
+                <div class="section-header">
+                    <span>📊 修复进度</span>
+                    <span id="overall-status" class="status pending">待开始</span>
+                </div>
+                <div class="section-content">
+                    <div class="progress">
+                        <div id="progress-bar" class="progress-bar"></div>
+                    </div>
+                    <div id="progress-text">0/9 任务完成</div>
+                </div>
+            </div>
+
+            <!-- 关键指标 -->
+            <div class="grid">
+                <div class="metric">
+                    <div id="db-status" class="metric-value">-</div>
+                    <div class="metric-label">数据库状态</div>
+                </div>
+                <div class="metric">
+                    <div id="cache-status" class="metric-value">-</div>
+                    <div class="metric-label">缓存状态</div>
+                </div>
+                <div class="metric">
+                    <div id="api-status" class="metric-value">-</div>
+                    <div class="metric-label">API状态</div>
+                </div>
+                <div class="metric">
+                    <div id="error-count" class="metric-value">0</div>
+                    <div class="metric-label">错误数量</div>
+                </div>
+            </div>
+
+            <!-- 缓存清理 -->
+            <div class="section">
+                <div class="section-header">
+                    <span>🧹 缓存清理</span>
+                    <button class="btn" onclick="clearCache()">清理所有缓存</button>
+                </div>
+                <div class="section-content">
+                    <div id="cache-log" class="log">点击"清理所有缓存"按钮开始清理缓存...</div>
+                </div>
+            </div>
+
+            <!-- 数据库检查 -->
+            <div class="section">
+                <div class="section-header">
+                    <span>🔍 数据库检查</span>
+                    <button class="btn warning" onclick="checkDatabase()">检查数据库</button>
+                </div>
+                <div class="section-content">
+                    <div id="database-log" class="log">点击"检查数据库"按钮开始检查数据库结构...</div>
+                </div>
+            </div>
+
+            <!-- API测试 -->
+            <div class="section">
+                <div class="section-header">
+                    <span>🌐 API测试</span>
+                    <button class="btn success" onclick="testAPI()">测试API</button>
+                </div>
+                <div class="section-content">
+                    <div id="api-log" class="log">点击"测试API"按钮开始测试新闻API接口...</div>
+                </div>
+            </div>
+
+            <!-- 完整修复流程 -->
+            <div class="section">
+                <div class="section-header">
+                    <span>🚀 一键修复</span>
+                    <button class="btn danger" onclick="fullRepair()">执行完整修复流程</button>
+                </div>
+                <div class="section-content">
+                    <div id="repair-log" class="log">点击"执行完整修复流程"按钮开始自动修复...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let errorCount = 0;
+        let completedTasks = 0;
+        const totalTasks = 9;
+
+        function updateProgress() {
+            const percentage = (completedTasks / totalTasks) * 100;
+            document.getElementById('progress-bar').style.width = percentage + '%';
+            document.getElementById('progress-text').textContent = `${completedTasks}/${totalTasks} 任务完成`;
+
+            const statusElement = document.getElementById('overall-status');
+            if (completedTasks === 0) {
+                statusElement.textContent = '待开始';
+                statusElement.className = 'status pending';
+            } else if (completedTasks === totalTasks) {
+                statusElement.textContent = '已完成';
+                statusElement.className = 'status success';
+            } else {
+                statusElement.textContent = '进行中';
+                statusElement.className = 'status pending';
+            }
+        }
+
+        function updateMetrics() {
+            document.getElementById('error-count').textContent = errorCount;
+        }
+
+        function log(elementId, message, type = 'info') {
+            const logElement = document.getElementById(elementId);
+            const timestamp = new Date().toLocaleTimeString();
+            const prefix = type === 'error' ? '❌' : type === 'success' ? '✅' : type === 'warning' ? '⚠️' : 'ℹ️';
+            logElement.textContent += `[${timestamp}] ${prefix} ${message}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        async function makeRequest(url, data = null) {
+            try {
+                const options = {
+                    method: data ? 'POST' : 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                };
+
+                if (data) {
+                    options.body = JSON.stringify(data);
+                }
+
+                const response = await fetch(url, options);
+                const result = await response.text();
+
+                return {
+                    success: response.ok,
+                    data: result,
+                    status: response.status
+                };
+            } catch (error) {
+                return {
+                    success: false,
+                    data: error.message,
+                    status: 0
+                };
+            }
+        }
+
+        async function clearCache() {
+            log('cache-log', '开始清理缓存...', 'info');
+
+            const tasks = [
+                { name: '清理应用缓存', file: 'simple_cache_clear.php' },
+                { name: '清理Doctrine缓存', file: 'comprehensive_doctrine_cache_clear.php' },
+                { name: '验证缓存清理', file: 'symfony_cache_clear_validate.php' }
+            ];
+
+            for (const task of tasks) {
+                log('cache-log', `执行: ${task.name}`, 'info');
+                const result = await makeRequest(task.file);
+
+                if (result.success) {
+                    log('cache-log', `${task.name}完成`, 'success');
+                    completedTasks++;
+                } else {
+                    log('cache-log', `${task.name}失败: ${result.data}`, 'error');
+                    errorCount++;
+                }
+            }
+
+            log('cache-log', '缓存清理完成', 'success');
+            document.getElementById('cache-status').textContent = '✅ 已清理';
+            updateProgress();
+            updateMetrics();
+        }
+
+        async function checkDatabase() {
+            log('database-log', '开始检查数据库...', 'info');
+
+            const tasks = [
+                { name: '检查表结构', file: 'debug_news_api_check.php' },
+                { name: '验证数据库架构', file: 'validate_doctrine_schema.php' },
+                { name: '检查字段映射', file: 'check_target_tables.php' }
+            ];
+
+            for (const task of tasks) {
+                log('database-log', `执行: ${task.name}`, 'info');
+                const result = await makeRequest(task.file);
+
+                if (result.success) {
+                    log('database-log', `${task.name}完成`, 'success');
+                    completedTasks++;
+                } else {
+                    log('database-log', `${task.name}失败: ${result.data}`, 'error');
+                    errorCount++;
+                }
+            }
+
+            log('database-log', '数据库检查完成', 'success');
+            document.getElementById('db-status').textContent = '✅ 正常';
+            updateProgress();
+            updateMetrics();
+        }
+
+        async function testAPI() {
+            log('api-log', '开始测试API...', 'info');
+
+            const endpoints = [
+                'http://localhost:8000/official-api/news',
+                'http://127.0.0.1:8000/official-api/news'
+            ];
+
+            for (const endpoint of endpoints) {
+                log('api-log', `测试端点: ${endpoint}`, 'info');
+
+                try {
+                    const response = await fetch(endpoint, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        }
+                    });
+
+                    if (response.ok) {
+                        const data = await response.text();
+                        log('api-log', `API测试成功: ${endpoint}`, 'success');
+                        log('api-log', `响应长度: ${data.length} 字符`, 'info');
+
+                        if (data.includes('update_at')) {
+                            log('api-log', '⚠️ 响应中仍包含 update_at 字段', 'warning');
+                            errorCount++;
+                        } else {
+                            log('api-log', '✅ 响应中未发现 update_at 字段', 'success');
+                        }
+
+                        completedTasks++;
+                        document.getElementById('api-status').textContent = '✅ 正常';
+                    } else {
+                        log('api-log', `API测试失败: ${response.status} ${response.statusText}`, 'error');
+                        errorCount++;
+                    }
+                } catch (error) {
+                    log('api-log', `API测试错误: ${error.message}`, 'error');
+                    errorCount++;
+                }
+            }
+
+            log('api-log', 'API测试完成', 'success');
+            updateProgress();
+            updateMetrics();
+        }
+
+        async function fullRepair() {
+            log('repair-log', '🚀 开始完整修复流程...', 'info');
+            log('repair-log', '这将依次执行所有修复步骤', 'info');
+
+            try {
+                // 步骤1: 缓存清理
+                log('repair-log', '步骤1: 清理缓存', 'info');
+                await clearCache();
+
+                // 步骤2: 数据库检查
+                log('repair-log', '步骤2: 检查数据库', 'info');
+                await checkDatabase();
+
+                // 步骤3: API测试
+                log('repair-log', '步骤3: 测试API', 'info');
+                await testAPI();
+
+                log('repair-log', '🎉 完整修复流程完成！', 'success');
+
+                if (errorCount === 0) {
+                    log('repair-log', '✅ 所有任务都成功完成，问题已修复！', 'success');
+                } else {
+                    log('repair-log', `⚠️ 修复完成，但发现 ${errorCount} 个错误，需要进一步检查`, 'warning');
+                }
+
+            } catch (error) {
+                log('repair-log', `修复流程出错: ${error.message}`, 'error');
+                errorCount++;
+            }
+
+            updateProgress();
+            updateMetrics();
+        }
+
+        // 页面加载时的初始化
+        document.addEventListener('DOMContentLoaded', function () {
+            updateProgress();
+            updateMetrics();
+        });
+    </script>
+</body>
+
+</html>

@@ -57,14 +57,14 @@ class ArticleReadStatistics
     #[Groups(['articleReadStatistics:read'])]
     private \DateTimeInterface $createAt;
 
-    #[ORM\Column(name: 'update_at', type: Types::DATETIME_MUTABLE)]
+    #[ORM\Column(name: 'updated_at', type: Types::DATETIME_MUTABLE)]
     #[Groups(['articleReadStatistics:read'])]
-    private \DateTimeInterface $updateAt;
+    private \DateTimeInterface $updatedAt;
 
     public function __construct()
     {
         $this->createAt = new \DateTime();
-        $this->updateAt = new \DateTime();
+        $this->updatedAt = new \DateTime();
     }
 
     #[ORM\PrePersist]
@@ -73,13 +73,13 @@ class ArticleReadStatistics
         if ($this->createAt === null) {
             $this->createAt = new \DateTime();
         }
-        $this->updateAt = new \DateTime();
+        $this->updatedAt = new \DateTime();
     }
 
     #[ORM\PreUpdate]
     private function setUpdateAtValue(): void
     {
-        $this->updateAt = new \DateTime();
+        $this->updatedAt = new \DateTime();
     }
 
     // Getters and Setters
@@ -187,14 +187,14 @@ class ArticleReadStatistics
         return $this;
     }
 
-    public function getUpdateAt(): \DateTimeInterface
+    public function getUpdatedAt(): \DateTimeInterface
     {
-        return $this->updateAt;
+        return $this->updatedAt;
     }
 
-    public function setUpdateAt(\DateTimeInterface $updateAt): self
+    public function setUpdatedAt(\DateTimeInterface $updatedAt): self
     {
-        $this->updateAt = $updateAt;
+        $this->updatedAt = $updatedAt;
         return $this;
     }
 
@@ -340,7 +340,7 @@ class ArticleReadStatistics
             'anonymousReadRate' => $this->getAnonymousReadRate(),
             'registeredReadRate' => $this->getRegisteredReadRate(),
             'createAt' => $this->createAt->format('Y-m-d H:i:s'),
-            'updateAt' => $this->updateAt->format('Y-m-d H:i:s'),
+            'updatedAt' => $this->updatedAt->format('Y-m-d H:i:s'),
         ];
     }
 }

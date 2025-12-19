@@ -58,7 +58,7 @@ class WechatController extends AbstractController
 
             $publicAccountId = $syncArticlesDto->getAccountId();
             $articlesData = $syncArticlesDto->getArticles();
-            
+
             // 步骤1: 验证或创建微信公众号基础数据
             $publicAccount = $this->accountRepository->findOrCreate($publicAccountId);
 
@@ -92,6 +92,20 @@ class WechatController extends AbstractController
                     $official->setArticleId($articleId);
                     $official->setTitle($articleData['title'] ?? '');
                     $official->setContent($articleData['content'] ?? '');
+
+                    // 设置发布时间 - 优先使用 publish_time，其次使用 update_time
+                    if (isset($articleData['publish_time'])) {
+                        $releaseTime = \DateTime::createFromFormat('U', $articleData['publish_time']);
+                        if ($releaseTime) {
+                            $official->setReleaseTime($releaseTime->format('Y-m-d H:i:s'));
+                        }
+                    } elseif (isset($articleData['update_time'])) {
+                        $releaseTime = \DateTime::createFromFormat('U', $articleData['update_time']);
+                        if ($releaseTime) {
+                            $official->setReleaseTime($releaseTime->format('Y-m-d H:i:s'));
+                        }
+                    }
+
                     // 其他字段按现有实体的默认值处理
                     $this->entityManager->persist($official);
                     $added++;
@@ -222,6 +236,20 @@ class WechatController extends AbstractController
                         $official->setArticleId($aid);
                         $official->setTitle($news['title'] ?? '');
                         $official->setContent($news['digest'] ?? '');
+
+                        // 设置发布时间 - 优先使用 publish_time，其次使用 update_time
+                        if (isset($news['publish_time'])) {
+                            $releaseTime = \DateTime::createFromFormat('U', $news['publish_time']);
+                            if ($releaseTime) {
+                                $official->setReleaseTime($releaseTime->format('Y-m-d H:i:s'));
+                            }
+                        } elseif (isset($news['update_time'])) {
+                            $releaseTime = \DateTime::createFromFormat('U', $news['update_time']);
+                            if ($releaseTime) {
+                                $official->setReleaseTime($releaseTime->format('Y-m-d H:i:s'));
+                            }
+                        }
+
                         $this->entityManager->persist($official);
                         $added++;
                     }
@@ -330,11 +358,25 @@ class WechatController extends AbstractController
             // 手动创建过滤器DTO而不是使用 #[MapRequestPayload]
             $filter = new WechatArticleFilterDto();
 
-            // 从查询参数设置分页参数
-            $page = max(1, (int)$request->query->get('page', 1));
-            $limit = max(1, min(100, (int)$request->query->get('limit', 20)));
+            // 支持新旧分页参数名，优先使用新参数 page/size
+            $page = $request->query->get('page');
+            $size = $request->query->get('size');
+
+            // 如果新参数不存在，则尝试使用旧参数 current/pageSize
+            if ($page === null) {
+                $page = $request->query->get('current', 1);
+            }
+            if ($size === null) {
+                $size = $request->query->get('pageSize', $request->query->get('limit', 20));
+            }
+
+            // 参数验证和默认值处理
+            $page = max(1, (int)$page);
+            $size = max(1, min(100, (int)$size));
+
+            // 设置分页参数到DTO（使用新的字段名）
             $filter->setPage($page);
-            $filter->setLimit($limit);
+            $filter->setSize($size);
 
             // 从查询参数设置标题（支持 keyword 和 title 两个参数名）
             $title = $request->query->get('title') ?: $request->query->get('keyword');
@@ -360,23 +402,21 @@ class WechatController extends AbstractController
 
             // 分页参数已在上面设置
 
-            $offset = ($page - 1) * $limit;
+            $offset = ($page - 1) * $size;
 
             // 获取过滤条件
             $criteria = $filter->getFilterCriteria();
 
             // 查询文章列表
-            $articles = $this->articleRepository->findByCriteria($criteria, $limit, $offset);
+            $articles = $this->articleRepository->findByCriteria($criteria, $size, $offset);
             $total = $this->articleRepository->countByCriteria($criteria);
-            $pages = (int)ceil($total / $limit);
+            $pages = (int)ceil($total / $size);
 
             return $this->apiResponse->success([
                 'items' => $articles,
-                'total' => $total,
-                'page' => $page,
-                'limit' => $limit,
-                'pages' => $pages,
-                'filterSummary' => $filter->getFilterSummary()
+                'currentPageNumber' => $page,
+                'itemsPerPage' => $size,
+                'totalCount' => $total
             ], Response::HTTP_OK);
 
         } catch (\Exception $e) {

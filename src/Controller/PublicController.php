@@ -171,11 +171,9 @@ class PublicController extends AbstractController
 
             return $this->apiResponse->success([
                 'items' => $items,
-                'total' => $total,
-                'page' => $page,
-                'limit' => $limit,
-                'pages' => $pages,
-                'type' => $type
+                'currentPageNumber' => $page,
+                'itemsPerPage' => $limit,
+                'totalCount' => $total,
             ], Response::HTTP_OK);
 
         } catch (\Exception $e) {
