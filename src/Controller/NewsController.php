@@ -456,7 +456,7 @@ class NewsController extends AbstractController
 
             // 使用原生 SQL 执行删除操作
             $updateTime = (new \DateTime())->format('Y-m-d H:i:s');
-            $updateSql = 'UPDATE sys_news_article SET status = :status, update_time = :updateTime WHERE id = :id';
+            $updateSql = 'UPDATE sys_news_article SET status = :status, update_at = :updateTime WHERE id = :id';
 
             $result = $connection->executeStatement(
                 $updateSql,
